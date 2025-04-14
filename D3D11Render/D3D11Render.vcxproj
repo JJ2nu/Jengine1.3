@@ -283,6 +283,7 @@ xcopy /y /d "$(ProjectDir)..\x64\$(Configuration)\*.hlsl" "$(ProjectDir)..\Shade
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
     </FxCompile>
+    <FxCompile Include="ParticleCS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PBRShared.fxh" />
