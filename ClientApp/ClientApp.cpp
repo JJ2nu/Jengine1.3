@@ -52,15 +52,16 @@ bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 	//	m_Renderer->m_billboards[i]->axis = Vector3(1, 1, 0);
 	//	m_Renderer->m_billboards[i]->scale = Vector2(100.f, 100.f);
 	//}
-	// 
+
 	m_Renderer->CreateParticleSystem();
-	m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::CONE);
+	m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::SPHERE);
+	m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[0]);
 	m_Renderer->SetParticleTexture(0, 0, L"../Resource/defaultSmoke.jpg",
 		L"../Resource/defaultSmoke.jpg", L"../Resource/defaultSmokeNormal.jpg");
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emitterPosition = Vector3(0, 120, 350);
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 2000.f;
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5,5);
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5,5);
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5, 5);
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5, 5);
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startOpacity = 0.07f;
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endOpacity = 0.f;
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_lifetime = 5.f;
@@ -138,8 +139,8 @@ void Client::ClientApp::Update(float deltaTime)
 	{
 		billboard->Update(m_Timer.DeltaTime());
 	}
-
-	m_Renderer->UpdateParticleSystem(deltaTime);
+	if (!m_Renderer->m_particleSystems.empty())
+		m_Renderer->UpdateParticleSystem(deltaTime);
 	Engine::EngineCore::Update(deltaTime);
 
 }
@@ -178,7 +179,8 @@ void Client::ClientApp::Render(int windowIdx)
 		}
 
 		m_Renderer->RenderBillboards(0);
-		m_Renderer->RenderPaticleSystem();
+		if(!m_Renderer->m_particleSystems.empty())
+			m_Renderer->RenderPaticleSystem();
 		m_Renderer->PostProcess();
 	}
 

@@ -25,6 +25,12 @@ struct SpriteAnimCB
 	Vector4 blendColor = { 1.f,1.f,1.f,0.5f };
 };
 
+struct InstanceData {
+	Matrix World;
+	Vector4 AnimParams; // x:current frame, y:width tiles, z:height tiles
+	Vector4 Color;
+};
+
 class ParticleVertex
 {
 public:
@@ -53,6 +59,8 @@ public:
 	float lifetime = 5.f;
 	float age = 0.f;
 	bool active = true;
+
+	size_t index;
 
 	//billboarding
 	float zorder = 0.f;
@@ -88,11 +96,11 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_alphaTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_normalTexture;
 
-	std::vector<Particle*> m_particlePool;  // 활성/비활성 파티클 풀
-	std::vector<Particle*> m_activeParticles; // 활성 파티클만 별도 관리
-	std::queue<Particle*> m_inactiveParticles; // 비활성 파티클 큐
+	std::vector<Particle> m_particlePool;  // 실제 파티클 데이터 저장
+	std::queue<size_t> m_inactiveIndices;  // 비활성 인덱스 관리
+	std::vector<size_t> m_activeIndices;   // 활성 인덱스 관리
 
-    size_t m_maxParticles = 1000000000;
+    size_t m_maxParticles = 100000;
     float m_emissionRate = 50.f;
     float m_emissionThreshold = 0.f;
 	Vector3 m_emitterPosition = Vector3{ 0,20,0 };
@@ -118,8 +126,11 @@ public:
 	std::mt19937 m_randomGenerator;
 	std::uniform_real_distribution<float> m_randomRange0to1;
 	std::function<float()> m_randomVal;
-};
 
+	std::vector<InstanceData> m_instances;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instanceBuffer;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_instanceSRV;
+};
 class SphereEmitter : public ParticleEmitter
 {
 public:
@@ -179,9 +190,6 @@ public:
 	void Update(float deltaTime) override;
 
 };
-
-
-
 class ParticleSystem
 {
 public:

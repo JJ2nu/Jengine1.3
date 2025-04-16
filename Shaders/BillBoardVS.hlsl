@@ -16,7 +16,7 @@ float2 UVAnimate(float2 uv)
 }
 
 
-PS_INPUT main(PARTICLE_VS_INPUT vin)
+PS_INPUT main(VS_INPUT vin)
 {
     PS_INPUT vout;
 

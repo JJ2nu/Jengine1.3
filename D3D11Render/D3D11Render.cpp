@@ -382,29 +382,20 @@ void Render::D3DRenderer::ImguiRender()
 			prevrect = currect;
 		}
 
-		//ImGui::Text("Forward/Back:  W,S");
-		//ImGui::Text("Left/Right:    A,D");
-		//ImGui::Text("Up/Down:       Q,E");
-		//ImGui::Text("View control:  LeftClick & Move");
-		//ImGui::Text("Zoom In/Out:   Mouse Scroll");
+		ImGui::Checkbox("Use Instancing", &_isParticleInstanced);
 
-		//ImGui::ColorEdit4("Backbuffer", reinterpret_cast<float*>(&m_ClearColor), 0);
 		ImGui::Checkbox("Use Deferred", &deferredflag);
 		ImGui::Checkbox("Use Bloom", &bloomflag);
+
 		ImGui::Checkbox("normalmap", (bool*) & m_ptestlight.mb.ambient.x);
 		ImGui::SliderFloat("bloomThreshold", &bloomThreshold, 0.0f, 1.0f);
 		ImGui::SliderFloat("bloomintensity", &bloomIntensity, 0.0f, 100.0f);
 		ImGui::SliderInt("blurradius", &bloomblur, 1, 54);
-		//ImGui::SliderFloat("near", &nearPlane, 0.0f, 1.0f);
-		//ImGui::SliderFloat("far", &farPlane, 0.0f, 100000.0f);
-		if (!m_billboards.empty())
-		{
-			
-		ImGui::ColorEdit4("blendcolor", (float*)&m_billboards[0]->_frameinfo.blendColor);
-		}
+		/*	if (!m_billboards.empty())
+			{
+				ImGui::ColorEdit4("blendcolor", (float*)&m_billboards[0]->_frameinfo.blendColor);
+			}*/
 		ImGui::SliderFloat4("lightDirection 0", reinterpret_cast<float*>(&m_ptestlight.lb[0].lightDir), -1.0f, 1.0f);
-
-		ImGui::Text("\n");
 
 		ImGui::Text("\n");
 
@@ -412,8 +403,7 @@ void Render::D3DRenderer::ImguiRender()
 		ImGui::SliderFloat("useIBL ", &m_ptestlight.mb.ambient.y, 0.f, 1.0f);
 		
 		
-		
-		ImGui::Text("particle count %d", m_particleSystems[0]->m_emitters[0]->m_activeParticles.size());
+		ImGui::Text("particle count %d", m_particleSystems[0]->m_emitters[0]->m_activeIndices.size());
 		ImGui::SliderFloat("emit rate", &m_particleSystems[0]->m_emitters[0]->m_emissionRate, 1.f, 10000.0f);
 		ImGui::SliderFloat3("emit vector", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[0]->m_startVelocity), -1.f, 1.f);
 		ImGui::ColorEdit3("particle start color", (float*)&m_particleSystems[0]->m_emitters[0]->m_startColor); // Edit 3 floats representing a color	
@@ -900,7 +890,7 @@ void Render::D3DRenderer::CreateParticleSystem()
 	HRESULT hr = S_OK;
 	Microsoft::WRL::ComPtr<ID3DBlob> VertexBuffer = nullptr;
 
-	hr = CompileShaderFromFile(L"../Shaders/BillBoardVS.hlsl", "main", "vs_5_0", VertexBuffer.GetAddressOf(), nullptr);
+	hr = CompileShaderFromFile(L"../Shaders/BillboardVS.hlsl", "main", "vs_5_0", VertexBuffer.GetAddressOf(), nullptr);
 	if (FAILED(hr))
 		HR_T(D3DReadFileToBlob(L"../Shaders/BillboardVS.cso", VertexBuffer.GetAddressOf()));
 
@@ -917,12 +907,10 @@ void Render::D3DRenderer::CreateParticleSystem()
 
 	std::vector<D3D11_INPUT_ELEMENT_DESC> inputLayoutDesc;
 	inputLayoutDesc.reserve(shaderDesc.InputParameters);
-
 	for (size_t i = 0; i < shaderDesc.InputParameters; i++)
 	{
 		D3D11_SIGNATURE_PARAMETER_DESC* paramDesc = new D3D11_SIGNATURE_PARAMETER_DESC();
 		pReflector->GetInputParameterDesc(i, paramDesc);
-
 		D3D11_INPUT_ELEMENT_DESC elemDesc
 		{
 			.SemanticName = paramDesc->SemanticName,
@@ -964,20 +952,37 @@ void Render::D3DRenderer::CreateParticleSystem()
 
 	// 픽셀 셰이더 생성
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob;
-	HR_T(D3DReadFileToBlob(L"../Shaders/BillBoardPS.cso", psBlob.GetAddressOf()));
+	HR_T(D3DReadFileToBlob(L"../Shaders/BillboardPS.cso", psBlob.GetAddressOf()));
 	HR_T(m_pDevice->CreatePixelShader(psBlob->GetBufferPointer(),
 		psBlob->GetBufferSize(), NULL, newPS->m_pixelShader.GetAddressOf()));
 
-
-
-
-
-
-
-
-
 	m_particleSystems.push_back(newPS);
 
+}
+void Render::D3DRenderer::CreateEmitterInstanceBuffer(ParticleEmitter* _emitter)
+{
+	D3D11_BUFFER_DESC instanceBufferDesc = {};
+	instanceBufferDesc.ByteWidth = sizeof(InstanceData) * _emitter->m_maxParticles;
+	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	instanceBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	instanceBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	instanceBufferDesc.StructureByteStride = sizeof(InstanceData);
+
+	D3D11_SUBRESOURCE_DATA instanceData = {};
+	_emitter->m_instances.resize(_emitter->m_maxParticles);
+	instanceData.pSysMem = _emitter->m_instances.data();
+	HR_T(m_pDevice->CreateBuffer(&instanceBufferDesc, &instanceData,
+		_emitter->m_instanceBuffer.GetAddressOf()));
+
+	// Shader Resource View 생성 추가
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.NumElements = _emitter->m_maxParticles;
+	HR_T(m_pDevice->CreateShaderResourceView(_emitter->m_instanceBuffer.Get(),
+		&srvDesc, _emitter->m_instanceSRV.GetAddressOf()));
 }
 void Render::D3DRenderer::SetParticleTexture(size_t sysIndex, size_t emitIndex , std::wstring defaultpath, std::wstring alphapath, std::wstring normalpath)
 {
@@ -1010,7 +1015,7 @@ void Render::D3DRenderer::RenderPaticleSystem()
 
 	m_pDeviceContext->RSSetState(m_pNoneCullmodeRS.Get());
 	m_pDeviceContext->OMSetBlendState(m_pAlphaBlendState.Get(), blendFactor, 0xffffffff);
-	m_pDeviceContext->OMSetDepthStencilState(m_pZOnDSS.Get(), 1);
+	m_pDeviceContext->OMSetDepthStencilState(m_pZOffDSS.Get(), 1);
 
 	for (auto system : m_particleSystems)
 	{
@@ -1023,7 +1028,10 @@ void Render::D3DRenderer::RenderPaticleSystem()
 		m_pDeviceContext->PSSetConstantBuffers(5, 1, system->_spriteAnimConstantBuffer.GetAddressOf());
 		for (auto emitter : system->m_emitters)
 		{
-			RenderEmitters(emitter);
+			if(false == _isParticleInstanced)
+				RenderEmitters(emitter);
+			else
+				RenderEmittersInstanced(emitter);
 		}
 	}
 	m_pDeviceContext->RSSetState(m_pBackCullmodeRS.Get());
@@ -1032,45 +1040,52 @@ void Render::D3DRenderer::RenderPaticleSystem()
 void Render::D3DRenderer::RenderEmitters(ParticleEmitter* emitter)
 {
 
-	std::sort(emitter->m_activeParticles.begin(), emitter->m_activeParticles.end(),
-		[](const Particle* ob1, const Particle* ob2)-> bool
+	std::sort(emitter->m_activeIndices.begin(), emitter->m_activeIndices.end(),
+		[&](const size_t& idx1, const size_t& idx2)-> bool
 		{
-			return ob1->zorder > ob2->zorder;
+			return emitter->m_particlePool[idx1].zorder > emitter->m_particlePool[idx2].zorder;
 		});
 	ConstantBuffer cb1;
-
+	cb1.mWorld = Matrix::Identity;
+	cb1.mView = DirectX::XMMatrixTranspose(m_View);
+	cb1.mProjection = DirectX::XMMatrixTranspose(m_Projection);
+	cb1.EyePos = Vector4(mainCam.Eye.x, mainCam.Eye.y, mainCam.Eye.z, 0);
+	m_pDeviceContext->UpdateSubresource(m_pConstantBuffer.Get(), 0, nullptr, &cb1, 0, 0);
 	m_pDeviceContext->PSSetShaderResources(17, 1, emitter->m_defaultTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(18, 1, emitter->m_alphaTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(19, 1, emitter->m_normalTexture.GetAddressOf());
-
-	for (auto particle : emitter->m_activeParticles)
+	for (auto idx : emitter->m_activeIndices)
 	{
-		cb1.mWorld = DirectX::XMMatrixTranspose(particle->world);
+		cb1.mWorld = DirectX::XMMatrixTranspose(emitter->m_particlePool[idx].world);
 		cb1.mView = DirectX::XMMatrixTranspose(m_View);
 		cb1.mProjection = DirectX::XMMatrixTranspose(m_Projection);
 		cb1.EyePos = Vector4(mainCam.Eye.x, mainCam.Eye.y, mainCam.Eye.z, 0);
 		m_pDeviceContext->UpdateSubresource(m_pConstantBuffer.Get(), 0, nullptr, &cb1, 0, 0);
-		m_pDeviceContext->UpdateSubresource(emitter->parentSys->_spriteAnimConstantBuffer.Get(), 0, nullptr, &particle->_frameinfo, 0, 0);
+		m_pDeviceContext->UpdateSubresource(emitter->parentSys->_spriteAnimConstantBuffer.Get(), 0, nullptr, &emitter->m_particlePool[idx]._frameinfo, 0, 0);
 		m_pDeviceContext->DrawIndexed(6, 0, 0);
 	}
-
-
-	//cb1.mView = DirectX::XMMatrixTranspose(m_View);
-	//cb1.mProjection = DirectX::XMMatrixTranspose(m_Projection);
-	//cb1.EyePos = Vector4(mainCam.Eye.x, mainCam.Eye.y, mainCam.Eye.z, 0);
-
-	//m_pDeviceContext->UpdateSubresource(m_pConstantBuffer.Get(), 0, nullptr, &cb1, 0, 0);
-
-	//for (auto particle : emitter->m_activeParticles)
-	//{
-	//	cb1.mWorld = DirectX::XMMatrixTranspose(particle->world);
-	//	m_pDeviceContext->UpdateSubresource(emitter->parentSys->_spriteAnimConstantBuffer.Get(), 0, nullptr, &particle->_frameinfo, 0, 0);
-	//}
-
-	//m_pDeviceContext->DrawIndexedInstanced(6, 파티클개수, 0, 0, 0);
-
-
 }
+void Render::D3DRenderer::RenderEmittersInstanced(ParticleEmitter* emitter)
+{
+
+	std::sort(emitter->m_activeIndices.begin(), emitter->m_activeIndices.end(),
+		[&](const size_t& idx1, const size_t& idx2)-> bool
+		{
+			return emitter->m_particlePool[idx1].zorder > emitter->m_particlePool[idx2].zorder;
+		});
+
+	D3D11_MAPPED_SUBRESOURCE mapped;
+	HR_T(m_pDeviceContext->Map(emitter->m_instanceBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
+	memcpy(mapped.pData, emitter->m_instances.data(), sizeof(InstanceData) * emitter->m_activeIndices.size());
+	m_pDeviceContext->Unmap(emitter->m_instanceBuffer.Get(), 0);
+	// 셰이더 리소스 바인딩
+	m_pDeviceContext->VSSetShaderResources(0, 1, emitter->m_instanceSRV.GetAddressOf());
+	m_pDeviceContext->PSSetShaderResources(17, 1, emitter->m_defaultTexture.GetAddressOf());
+	m_pDeviceContext->PSSetShaderResources(18, 1, emitter->m_alphaTexture.GetAddressOf());
+	m_pDeviceContext->PSSetShaderResources(19, 1, emitter->m_normalTexture.GetAddressOf());
+	m_pDeviceContext->DrawIndexedInstanced(6, emitter->m_instances.size(), 0, 0, 0);
+}
+
 void Render::D3DRenderer::PostProcess()
 {
 

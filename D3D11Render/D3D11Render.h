@@ -499,14 +499,14 @@ namespace Render
 
 		std::vector<ParticleSystem*> m_particleSystems;
 		void CreateParticleSystem();
+		void CreateEmitterInstanceBuffer(class ParticleEmitter* _emitter);
 		void SetParticleTexture(size_t sysIndex, size_t emitIndex,std::wstring defaultpath, std::wstring alphapath, std::wstring normalpath);
-		
 		void UpdateParticleSystem(float deltaTime);
 		void RenderPaticleSystem();
 		void RenderEmitters(ParticleEmitter* emitter);
+		void RenderEmittersInstanced(ParticleEmitter* emitter);
 
-
-
+		bool _isParticleInstanced = false;
 
 
 

@@ -129,15 +129,14 @@ struct VS_INPUT
 
 struct PARTICLE_VS_INPUT
 {
-    float4 Pos : SV_POSITION;
+    float3 Pos : POSITION;
     float3 Norm : NORMAL;
     float3 Tangent : TANGENT;
     float3 Binormal : BINORMAL;
     float2 Tex : TEXCOORD0;
-    //float3 instancePosition : INSTANCE_POSITION;
-    //float2 instanceSize : INSTANCE_SIZE;
-    //float4 instanceColor : INSTANCE_COLOR;
+    uint InstanceID : SV_InstanceID; // 인스턴스 ID 추가
 };
+
 
 
 struct PS_INPUT
@@ -149,6 +148,17 @@ struct PS_INPUT
     float3 Tangent : TANGENT;
     float3 Binormal : BINORMAL;
     float4 PosShadow : TEXCOORD1;
+};
+struct PARTICLE_PS_INPUT
+{
+    float4 Pos : SV_POSITION;
+    float4 WorldPos : POSITION;
+    float2 Tex : TEXCOORD0;
+    float3 Norm : NORMAL;
+    float3 Tangent : TANGENT;
+    float3 Binormal : BINORMAL;
+    float4 PosShadow : TEXCOORD1;
+    float4 ColorBlend : TEXCOORD2;
 };
 
 struct DeferredOut
