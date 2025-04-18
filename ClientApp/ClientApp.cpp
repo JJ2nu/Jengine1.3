@@ -29,7 +29,7 @@ bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 	ob1->model->isStaticMesh = true;
 
 	ObjectAwake(ob1);
-	ob1->Location = { -400,200,800 };
+	ob1->Location = { 0, 10, 350 };
 	//ob1->Rotation = { 0,89.5f,0 };
 
 	auto ob3 = CreateObject(L"../Resource/Ground.fbx");
@@ -38,73 +38,60 @@ bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 	ob3->model->usePBR = true;
 	//ob3->Scale = { 2.f,1.f,2.f };
 	ObjectAwake(ob3);
-	//for (int i = 0; i < 1; i++)
-	//{
-	//	m_Renderer->AddBillboard({ 0 + (i / 4) * 20.f ,200,500 + (i % 4) * 20.f }, { 100,100 },
-	//		L"../Resource/btest.png",
-	//		L"../Resource/btest.png",
-	//		L"");
-	//	m_Renderer->m_billboards[i]->_frameinfo.frameCnt = Vector4(1, 1, 0, 1);
-	//	m_Renderer->m_billboards[i]->_bIsLoop = true;
-	//	m_Renderer->m_billboards[i]->spinClockWise = i % 2;
-	//	m_Renderer->m_billboards[i]->_animDuration = 1 / 24.f;
-	//	m_Renderer->m_billboards[i]->mainCam = &m_Renderer->mainCam;
-	//	m_Renderer->m_billboards[i]->axis = Vector3(1, 1, 0);
-	//	m_Renderer->m_billboards[i]->scale = Vector2(100.f, 100.f);
-	//}
-
-	m_Renderer->CreateParticleSystem();
-	m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::SPHERE);
-	m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[0]);
-	m_Renderer->SetParticleTexture(0, 0, L"../Resource/defaultSmoke.jpg",
-		L"../Resource/defaultSmoke.jpg", L"../Resource/defaultSmokeNormal.jpg");
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emitterPosition = Vector3(0, 120, 350);
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 2000.f;
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5, 5);
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5, 5);
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startOpacity = 0.07f;
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endOpacity = 0.f;
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_lifetime = 5.f;
-
-	//static_cast<CylinderEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->radius = 100.f;
-	//static_cast<CylinderEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->height = 200.f;
-	//static_cast<CubeEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->scale = Vector3(100, 50, 200);
-	//static_cast<SphereEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->radius = 1.f;
 
 
-	//std::vector<Vector3> meshVertices;
-	//if (false == ob1->model->isStaticMesh)
-	//{
-	//	for (auto& mesh : ob1->model->m_meshes)
-	//	{
-	//		for (auto& vertex : mesh->vertices)
-	//		{
-	//			meshVertices.push_back(Vector3(vertex.position.x, vertex.position.y, vertex.position.z));
-	//		}
-	//	}
-	//}
-	//else
-	//{
-	//	for (auto mesh : ob1->model->m_meshes)
-	//	{
-	//		for (auto vertex : mesh->vertices)
-	//		{
-	//			meshVertices.push_back(Vector3(vertex.position.x, vertex.position.y, vertex.position.z));
-	//		}
-	//	}
-	//}
 	//m_Renderer->CreateParticleSystem();
- //	m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::SURFACE, meshVertices);
-	//m_Renderer->SetParticleTexture(0, 0, L"../Resource/defaultFire.jpg",
-	//	L"../Resource/defaultFire.jpg", L"../Resource/defaultFireNormal.jpg");
-	//static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->targetModel = ob1->model;
-	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 1000.f;
+	//m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::TORUS);
+	//m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[0]);
+	//m_Renderer->SetParticleTexture(0, 0, L"../Resource/Explosion_01.jpg",
+	//	L"../Resource/Explosion_01_a.jpg", L"");
+	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emitterPosition = Vector3(0, 0, 350);
+	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 2000.f;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5, 5);
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5, 5);
-	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startVelocity = Vector3(0, 1, 0);
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startOpacity = 0.07f;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endOpacity = 0.f;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_lifetime = 5.f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32)};
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->isDisc = true;
+
+
+	std::vector<Vector3> meshVertices;
+	if (false == ob1->model->isStaticMesh)
+	{
+		for (auto& mesh : ob1->model->m_meshes)
+		{
+			for (auto& vertex : mesh->vertices)
+			{
+				meshVertices.push_back(Vector3(vertex.position.x, vertex.position.y, vertex.position.z));
+			}
+		}
+	}
+	else
+	{
+		for (auto mesh : ob1->model->m_meshes)
+		{
+			for (auto vertex : mesh->vertices)
+			{
+				meshVertices.push_back(Vector3(vertex.position.x, vertex.position.y, vertex.position.z));
+			}
+		}
+	}
+	m_Renderer->CreateParticleSystem();
+	m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::SURFACE, meshVertices);
+	m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[0]);
+
+	m_Renderer->SetParticleTexture(0, 0, L"../Resource/Explosion_01.jpg",
+		L"../Resource/Explosion_01_a.jpg", L"");
+	static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->targetModel = ob1->model;
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 1000.f;
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5, 5);
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5, 5);
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startVelocity = Vector3(0, 1, 0);
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startOpacity = 0.07f;
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endOpacity = 0.f;
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_lifetime = 5.f;
+	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32) };
 
 
 
@@ -139,7 +126,7 @@ void Client::ClientApp::Update(float deltaTime)
 	{
 		billboard->Update(m_Timer.DeltaTime());
 	}
-	if (!m_Renderer->m_particleSystems.empty())
+	//if (!m_Renderer->m_particleSystems.empty())
 		m_Renderer->UpdateParticleSystem(deltaTime);
 	Engine::EngineCore::Update(deltaTime);
 
@@ -179,7 +166,7 @@ void Client::ClientApp::Render(int windowIdx)
 		}
 
 		m_Renderer->RenderBillboards(0);
-		if(!m_Renderer->m_particleSystems.empty())
+		//if(!m_Renderer->m_particleSystems.empty())
 			m_Renderer->RenderPaticleSystem();
 		m_Renderer->PostProcess();
 	}
@@ -264,12 +251,12 @@ void Client::ClientApp::CameraMove()
 
 
 		Vector3 newLocation = Vector3(0, 0, 0);
-		if (m_input->IsKeyPressed(DIK_UPARROW) || m_input->IsKeyHold(DIK_UPARROW)) newLocation.y += 10.f;
-		if (m_input->IsKeyPressed(DIK_DOWNARROW) || m_input->IsKeyHold(DIK_DOWNARROW))newLocation.y -=  10.f;
-		if (m_input->IsKeyPressed(DIK_LEFTARROW) || m_input->IsKeyHold(DIK_LEFTARROW)) newLocation.x -=  10.f;
-		if (m_input->IsKeyPressed(DIK_RIGHTARROW) || m_input->IsKeyHold(DIK_RIGHTARROW))newLocation.x +=  10.f;
-		if (m_input->IsKeyPressed(DIK_C) || m_input->IsKeyHold(DIK_C))newLocation.z += 10.f;
-		if (m_input->IsKeyPressed(DIK_V) || m_input->IsKeyHold(DIK_V))newLocation.z -= 10.f;
+		if (m_input->IsKeyPressed(DIK_UPARROW) || m_input->IsKeyHold(DIK_UPARROW)) newLocation.y += 1.f;
+		if (m_input->IsKeyPressed(DIK_DOWNARROW) || m_input->IsKeyHold(DIK_DOWNARROW))newLocation.y -=  1.f;
+		if (m_input->IsKeyPressed(DIK_LEFTARROW) || m_input->IsKeyHold(DIK_LEFTARROW)) newLocation.x -=  1.f;
+		if (m_input->IsKeyPressed(DIK_RIGHTARROW) || m_input->IsKeyHold(DIK_RIGHTARROW))newLocation.x +=  1.f;
+		if (m_input->IsKeyPressed(DIK_C) || m_input->IsKeyHold(DIK_C))newLocation.z += 1.f;
+		if (m_input->IsKeyPressed(DIK_V) || m_input->IsKeyHold(DIK_V))newLocation.z -= 1.f;
 		objectList[0]->Location.x += newLocation.x;
 		objectList[0]->Location.y += newLocation.y;
 		objectList[0]->Location.z += newLocation.z;
@@ -284,8 +271,8 @@ void Client::ClientApp::CameraMove()
 		if (m_input->IsKeyPressed(DIK_Q) || m_input->IsKeyHold(DIK_Q)) m_Renderer->mainCam.Eye += Up * cameraspeed;
 		if (m_input->IsKeyPressed(DIK_E) || m_input->IsKeyHold(DIK_E)) m_Renderer->mainCam.Eye -= Up * cameraspeed;
 
-		if (m_input->IsKeyPressed(DIK_R) || m_input->IsKeyHold(DIK_R)) cameraspeed += 0.1f;
-		if (m_input->IsKeyPressed(DIK_T) || m_input->IsKeyHold(DIK_T)) cameraspeed -= 0.1f;
+		if (m_input->IsKeyPressed(DIK_R) || m_input->IsKeyHold(DIK_R)) cameraspeed += 0.01f;
+		if (m_input->IsKeyPressed(DIK_T) || m_input->IsKeyHold(DIK_T)) cameraspeed -= 0.01f;
 
 
 		if (m_input->IsKeyPressed(DIK_I) || m_input->IsKeyHold(DIK_I)) Engine::Time::timeScale = 0.1f;

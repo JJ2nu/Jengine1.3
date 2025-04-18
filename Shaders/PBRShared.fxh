@@ -129,7 +129,7 @@ struct VS_INPUT
 
 struct PARTICLE_VS_INPUT
 {
-    float3 Pos : POSITION;
+    float4 Pos : SV_POSITION;
     float3 Norm : NORMAL;
     float3 Tangent : TANGENT;
     float3 Binormal : BINORMAL;

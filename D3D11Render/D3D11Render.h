@@ -285,7 +285,7 @@ namespace Render
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_ShadowMapDSV = nullptr;
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_ShadowMap = nullptr;
 
-		FLOAT blendFactor[4] = { 1.f,1.f,1.f, 0.5f };
+		float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		Microsoft::WRL::ComPtr <ID3D11SamplerState> m_pSamplerLinear = nullptr;
 		Microsoft::WRL::ComPtr <ID3D11SamplerState> m_pBloomSampler = nullptr;
 		Microsoft::WRL::ComPtr <ID3D11SamplerState> m_pSamplerComparison = nullptr;
@@ -347,7 +347,7 @@ namespace Render
 
 
 
-		Vector4 m_ClearColor = Vector4(0.f, 0.f, 0.f, 1.0f);
+		Vector4 m_ClearColor = Vector4(0.5f, 0.5f, 0.5f, 1.0f);
 		bool m_show_another_window = false;
 		bool m_show_demo_window = true;
 		float m_f;
@@ -505,13 +505,7 @@ namespace Render
 		void RenderPaticleSystem();
 		void RenderEmitters(ParticleEmitter* emitter);
 		void RenderEmittersInstanced(ParticleEmitter* emitter);
-
 		bool _isParticleInstanced = false;
-
-
-
-
-
 
 		void PostProcess();
 

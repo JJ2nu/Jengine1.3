@@ -4,6 +4,11 @@
 
 void Particle::Update(float deltaTime)
 {
+	position += velocity * deltaTime;
+	age += deltaTime;
+	opacity = age / m_lifetime * (m_endOpacity - m_startOpacity) + m_startOpacity;
+	color = age / m_lifetime * (m_endColor - m_startColor) + m_startColor;
+	scale = age / m_lifetime * (m_endScale - m_startScale) + m_startScale;
 
 	scaleMat = DirectX::SimpleMath::Matrix::CreateScale(scale.x, scale.y, 1);
 	translationMat = DirectX::SimpleMath::Matrix::CreateTranslation(position);
@@ -15,42 +20,39 @@ void Particle::Update(float deltaTime)
 	{
 		if (axis != Vector3::Zero)
 		{
-			//Vector3 toCamera = mainCam - position;
-			//toCamera.Normalize();
-			//axis.Normalize();
-			//Vector3 right = axis.Cross(toCamera);
-			//right.Normalize();
-			//Vector3 forward = right.Cross(axis);
-			//forward.Normalize();
-			//world._11 = right.x;    world._12 = right.y;    world._13 = right.z;    // Right 벡터
-			//world._21 = axis.x;     world._22 = axis.y;     world._23 = axis.z;     // 고정 축 (Up)
-			//world._31 = forward.x;  world._32 = forward.y;  world._33 = forward.z;  // Forward 벡터
-			//world._41 = position.x; world._42 = position.y; world._43 = position.z; // 위치
-			world = Matrix::CreateConstrainedBillboard(position, mainCam, axis);
+			Vector3 toCamera = *mainCam - position;
+			toCamera.Normalize();
+			axis.Normalize();
+			Vector3 right = axis.Cross(toCamera);
+			right.Normalize();
+			Vector3 forward = right.Cross(axis);
+			forward.Normalize();
+			world._11 = right.x;    world._12 = right.y;    world._13 = right.z;    // Right 벡터
+			world._21 = axis.x;     world._22 = axis.y;     world._23 = axis.z;     // 고정 축 (Up)
+			world._31 = forward.x;  world._32 = forward.y;  world._33 = forward.z;  // Forward 벡터
+			world._41 = position.x; world._42 = position.y; world._43 = position.z; // 위치
 			world = scaleMat * world;
 
 		}
 		else
 		{
-			/*		viewRotInv._14 = 0.0f;
-					viewRotInv._24 = 0.0f;
-					viewRotInv._34 = 0.0f;
-					viewRotInv._41 = 0.0f;
-					viewRotInv._42 = 0.0f;
-					viewRotInv._43 = 0.0f;
-					viewRotInv._44 = 1.0f;
-					viewRotInv = viewRotInv.Invert();
-					world = scaleMat *
-						rotationMat * viewRotInv *
-						translationMat;*/
-			world = scaleMat * Matrix::CreateBillboard(position, mainCam,mainCam.Up);
+			viewRotInv._14 = 0.0f;
+			viewRotInv._24 = 0.0f;
+			viewRotInv._34 = 0.0f;
+			viewRotInv._41 = 0.0f;
+			viewRotInv._42 = 0.0f;
+			viewRotInv._43 = 0.0f;
+			viewRotInv._44 = 1.0f;
+			viewRotInv = viewRotInv.Invert();
+			world = scaleMat *
+				rotationMat * viewRotInv *
+				translationMat;
 		}
 		world =  world * parentWorld;
 	}
 	//view space zorder
 	{
 		Matrix temp = world * (*viewMat);
-		//temp.Decompose(s, q, t);
 		zorder = temp._43;
 	}
 	// sprite animation
@@ -73,24 +75,7 @@ void Particle::Update(float deltaTime)
 			}
 		}
 	}
-
-	if (lifetime <= age)
-	{
-		active = false;
-		parentEmitter->m_inactiveIndices.push(index);
-		for (auto it = parentEmitter->m_activeIndices.begin();it != parentEmitter->m_activeIndices.end();)
-		{
-			if ((*it) == index)
-				it = parentEmitter->m_activeIndices.erase(it);
-			else
-				++it;
-		}
-	}
-
 }
-
-
-
 void ParticleEmitter::Initialize(size_t maxParticles, float emissionRate, Vector3 position)
 {
 	m_maxParticles = maxParticles;
@@ -98,14 +83,14 @@ void ParticleEmitter::Initialize(size_t maxParticles, float emissionRate, Vector
 	m_emitterPosition = position;
 
 	m_particlePool.resize(maxParticles);  // 실제 메모리 할당
-	m_inactiveIndices = std::queue<size_t>();
 
 	// 인덱스 초기화
 	for (size_t i = 0; i < maxParticles; ++i) {
 		m_particlePool[i].active = false;
 		m_particlePool[i].parentEmitter = this;
 		m_particlePool[i].index = i;
-		m_inactiveIndices.push(i);  // 인덱스 큐에 추가
+		m_particlePool[i].viewMat = viewMat;
+		m_inactiveIndices.push(i);
 	}
 
 	// 기존 랜덤 초기화 유지
@@ -113,17 +98,14 @@ void ParticleEmitter::Initialize(size_t maxParticles, float emissionRate, Vector
 	m_randomRange0to1 = std::uniform_real_distribution<float>(-1.f, 1.f);
 	m_randomVal = std::bind(m_randomRange0to1, m_randomGenerator);
 }
-
 void ParticleEmitter::InitializeParticle(Particle* particle)
 {
 	particle->parentWorld = particle->parentEmitter->m_worldMat;
 	float randomscale = (m_randomVal() + 2) / 2;
 	Vector3 newvel = Vector3(m_randomVal(), m_randomVal(),m_randomVal());
-	particle->position = LocateShape() + newvel*10 ;
+	particle->position = LocateShape() /*+ newvel*10*/ ;
 	newvel.Normalize();
-
-	//particle->velocity = (newvel*0.33f+m_startVelocity * 0.66f) *150.f * randomscale;
-	particle->velocity = m_startVelocity*100.f;
+	particle->velocity = m_startVelocity*m_speed;
 	particle->color = m_startColor;
 	particle->scale = m_startScale;
 	particle->opacity = m_startOpacity;
@@ -131,40 +113,47 @@ void ParticleEmitter::InitializeParticle(Particle* particle)
 	particle->age = 0.0f;
 	particle->mainCam = mainCam;
 	particle->viewMat = viewMat;
-}
+	particle->m_startVelocity = m_startVelocity;
+	particle->m_startColor = m_startColor;
+	particle->m_endColor = m_endColor;
+	particle->m_startScale = m_startScale;
+	particle->m_endScale = m_endScale;
+	particle->m_startOpacity = m_startOpacity;
+	particle->m_endOpacity = m_endOpacity;
 
+	particle->_frameinfo = m_startFrame;
+	particle->_frameinfo.frameCnt.z = static_cast<size_t>((m_randomVal() + 2) / 2 * particle->_frameinfo.frameCnt.w);
+	if (particle->_frameinfo.frameCnt.z == m_startFrame.frameCnt.w)
+		particle->_frameinfo.frameCnt.z = 0;
+	particle->axis = axis;
+}
 void ParticleEmitter::Update(float deltaTime)
 {
 	// 활성 파티클 업데이트
-	for (auto particleIndex: m_activeIndices)
+#pragma omp parallel for
+	for (int i = 0 ; i < m_activeCount;++i)
 	{
-		m_particlePool[particleIndex].position += m_particlePool[particleIndex].velocity * deltaTime;
-		m_particlePool[particleIndex].age += deltaTime;
-		m_particlePool[particleIndex].opacity = m_particlePool[particleIndex].age / m_lifetime * (m_endOpacity - m_startOpacity) + m_startOpacity;
-		m_particlePool[particleIndex].color = m_particlePool[particleIndex].age / m_lifetime * (m_endColor - m_startColor) +m_startColor;
-		m_particlePool[particleIndex].scale = m_particlePool[particleIndex].age / m_lifetime * (m_endScale - m_startScale) + m_startScale;
-		m_particlePool[particleIndex].Update(deltaTime);
+		m_particlePool[i].viewMat = viewMat;
+		m_particlePool[i].mainCam = mainCam;
+		m_particlePool[i].cameraUp = cameraUp;
+		m_particlePool[i].Update(deltaTime);
 
 	}
 
-
-	//for (auto it = m_activeIndices.begin(); it != m_activeIndices.end();) {
-	//	Particle& particle = m_particlePool[*it];
-
-	//	if (m_particlePool[*it].age >= m_particlePool[*it].lifetime) 
-	//	{
-	//		m_particlePool[*it].active = false;
-	//		m_inactiveIndices.push(*it);  // 인덱스 반환
-	//		it = m_activeIndices.erase(it);
-	//	}
-	//	else 
-	//	{
-	//		++it;
-	//	}
-	//}
-
+	// 수명 다한 파티클 비활성화
+	for (int i = 0; i < m_activeCount;++i)
+	{
+		if (m_particlePool[i].age >= m_particlePool[i].lifetime)
+		{
+			m_particlePool[i].active = false;
+			m_activeCount--;
+			std::swap(m_particlePool[i], m_particlePool[m_activeCount]);
+			m_inactiveIndices.push(m_activeCount);
+		}
+	}
 
 	// 새 파티클 생성
+	
 	size_t newParticles = 0;
 	m_emissionThreshold += deltaTime * m_emissionRate;
 	if (m_emissionThreshold >= 1)
@@ -172,33 +161,40 @@ void ParticleEmitter::Update(float deltaTime)
 		newParticles = static_cast<size_t>(m_emissionThreshold);
 		m_emissionThreshold -= newParticles;
 	}
-
-	// 풀에서 비활성 파티클 재사용
-	while (newParticles > 0 && !m_inactiveIndices.empty())
+	while (0 < newParticles && !m_inactiveIndices.empty())
 	{
-		size_t idx = m_inactiveIndices.front();
+		size_t index = m_inactiveIndices.top();
 		m_inactiveIndices.pop();
-
-		InitializeParticle(&m_particlePool[idx]);
-		m_particlePool[idx].active = true;
-		m_activeIndices.push_back(idx);
+		if (index >= m_activeCount) {
+			std::swap(m_particlePool[index], m_particlePool[m_activeCount]);
+			index = m_activeCount;
+		}
+		m_activeCount++;
+		m_particlePool[index].active = true;
+		InitializeParticle(&m_particlePool[index]);
 		newParticles--;
+
 	}
+
 
 	m_translationMat = Matrix::CreateTranslation(m_emitterPosition);
 	m_rotationMat = Matrix::CreateFromQuaternion(m_emitterRotation);
 	m_worldMat = m_rotationMat * m_translationMat;
-	for (int i = 0;i < m_activeIndices.size();i++)
+	std::sort(m_particlePool.begin(),
+		m_particlePool.begin() + m_activeCount,
+		[](const Particle& a, const Particle& b) {
+			return a.zorder > b.zorder; // 높은 zorder가 먼저 오도록
+		});
+
+	for (int i = 0;i < m_activeCount;i++)
 	{
-		m_instances[i].World = DirectX::XMMatrixTranspose(m_particlePool[m_activeIndices[i]].world);
-		m_instances[i].AnimParams = m_particlePool[m_activeIndices[i]]._frameinfo.frameCnt;
-		m_instances[i].Color = m_particlePool[m_activeIndices[i]]._frameinfo.blendColor;
+		m_instances[i].World = DirectX::XMMatrixTranspose(m_particlePool[i].world);
+		m_instances[i].AnimParams = m_particlePool[i]._frameinfo.frameCnt;
+		m_instances[i].Color = m_particlePool[i]._frameinfo.blendColor;
 	}
 
 
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 bool ParticleSystem::Initialize()
@@ -238,6 +234,7 @@ void ParticleSystem::Update(float deltaTime)
     {
 		if (false == emitter->m_Active) continue;
 		emitter->mainCam = mainCam;
+		emitter->cameraUp = cameraUp;
 		emitter->viewMat = viewMat;
         emitter->Update(deltaTime);
     }
@@ -359,67 +356,7 @@ Vector3 SurfaceEmitter::LocateShape()
 }
 void SurfaceEmitter::Update(float deltaTime)
 {
-
+	ParticleEmitter::Update(deltaTime);
 	m_worldMat = *targetModel->objectMatrix;
-	// 활성 파티클 업데이트
-	for (auto particleIndex : m_activeIndices)
-	{
-		m_particlePool[particleIndex].position += m_particlePool[particleIndex].velocity * deltaTime;
-		m_particlePool[particleIndex].age += deltaTime;
-		m_particlePool[particleIndex].opacity = m_particlePool[particleIndex].age / m_lifetime * (m_endOpacity - m_startOpacity) + m_startOpacity;
-		m_particlePool[particleIndex].color = m_particlePool[particleIndex].age / m_lifetime * (m_endColor - m_startColor) + m_startColor;
-		m_particlePool[particleIndex].scale = m_particlePool[particleIndex].age / m_lifetime * (m_endScale - m_startScale) + m_startScale;
-		m_particlePool[particleIndex].Update(deltaTime);
-
-	}
-#pragma omp parallel for
-	for (auto it = m_activeIndices.begin(); it != m_activeIndices.end();) {
-		Particle& particle = m_particlePool[*it];
-
-		if (m_particlePool[*it].age >= m_particlePool[*it].lifetime)
-		{
-			m_particlePool[*it].active = false;
-			m_inactiveIndices.push(*it);  // 인덱스 반환
-			it = m_activeIndices.erase(it);
-		}
-		else
-		{
-			++it;
-		}
-	}
-
-
-	// 새 파티클 생성
-	size_t newParticles = 0;
-	m_emissionThreshold += deltaTime * m_emissionRate;
-	if (m_emissionThreshold >= 1)
-	{
-		newParticles = static_cast<size_t>(m_emissionThreshold);
-		m_emissionThreshold -= newParticles;
-	}
-
-	// 풀에서 비활성 파티클 재사용
-	while (newParticles > 0 && !m_inactiveIndices.empty())
-	{
-		size_t idx = m_inactiveIndices.front();
-		m_inactiveIndices.pop();
-
-		Particle& particle = m_particlePool[idx];
-		InitializeParticle(&particle);
-		particle.active = true;
-		m_activeIndices.push_back(idx);
-
-		newParticles--;
-	}
-
-	m_translationMat = Matrix::CreateTranslation(m_emitterPosition);
-	m_rotationMat = Matrix::CreateFromQuaternion(m_emitterRotation);
-	m_worldMat = m_rotationMat * m_translationMat;
-	for (int i = 0;i < m_activeIndices.size();i++)
-	{
-		m_instances[i].World = DirectX::XMMatrixTranspose(m_particlePool[m_activeIndices[i]].world);
-		m_instances[i].AnimParams = m_particlePool[m_activeIndices[i]]._frameinfo.frameCnt;
-		m_instances[i].Color = m_particlePool[m_activeIndices[i]]._frameinfo.blendColor;
-	}
 }
 

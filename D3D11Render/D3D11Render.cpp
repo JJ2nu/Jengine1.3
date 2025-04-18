@@ -391,10 +391,7 @@ void Render::D3DRenderer::ImguiRender()
 		ImGui::SliderFloat("bloomThreshold", &bloomThreshold, 0.0f, 1.0f);
 		ImGui::SliderFloat("bloomintensity", &bloomIntensity, 0.0f, 100.0f);
 		ImGui::SliderInt("blurradius", &bloomblur, 1, 54);
-		/*	if (!m_billboards.empty())
-			{
-				ImGui::ColorEdit4("blendcolor", (float*)&m_billboards[0]->_frameinfo.blendColor);
-			}*/
+
 		ImGui::SliderFloat4("lightDirection 0", reinterpret_cast<float*>(&m_ptestlight.lb[0].lightDir), -1.0f, 1.0f);
 
 		ImGui::Text("\n");
@@ -403,9 +400,10 @@ void Render::D3DRenderer::ImguiRender()
 		ImGui::SliderFloat("useIBL ", &m_ptestlight.mb.ambient.y, 0.f, 1.0f);
 		
 		
-		ImGui::Text("particle count %d", m_particleSystems[0]->m_emitters[0]->m_activeIndices.size());
-		ImGui::SliderFloat("emit rate", &m_particleSystems[0]->m_emitters[0]->m_emissionRate, 1.f, 10000.0f);
+		ImGui::Text("particle count %d", m_particleSystems[0]->m_emitters[0]->m_activeCount);
+		ImGui::SliderFloat("emit rate", &m_particleSystems[0]->m_emitters[0]->m_emissionRate, 1.f, 100000.0f);
 		ImGui::SliderFloat3("emit vector", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[0]->m_startVelocity), -1.f, 1.f);
+		ImGui::SliderFloat("emit speed", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[0]->m_speed), 1.f, 100.f);
 		ImGui::ColorEdit3("particle start color", (float*)&m_particleSystems[0]->m_emitters[0]->m_startColor); // Edit 3 floats representing a color	
 		ImGui::ColorEdit3("particle end color", (float*)&m_particleSystems[0]->m_emitters[0]->m_endColor); // Edit 3 floats representing a color	
 		ImGui::SliderFloat2("particle start scale", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[0]->m_startScale), 0.0f, 1000.0f);
@@ -413,7 +411,8 @@ void Render::D3DRenderer::ImguiRender()
 		ImGui::SliderFloat("particle start opacity", &m_particleSystems[0]->m_emitters[0]->m_startOpacity, 0.f, 1.f);
 		ImGui::SliderFloat("particle end opacity", &m_particleSystems[0]->m_emitters[0]->m_endOpacity, 0.f, 1.f);
 		ImGui::SliderFloat("particle lifetime", &m_particleSystems[0]->m_emitters[0]->m_lifetime, 1.f, 10.f);
-		ImGui::SliderFloat("Torus outer radius", &static_cast<ConeEmitter*>(m_particleSystems[0]->m_emitters[0])->angle, 0.1f, DirectX::XM_PI);
+		ImGui::SliderFloat("Torus inner radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[0])->innerRadius, 0.1f,100.f);
+		ImGui::SliderFloat("Torus outer radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[0])->outerRadius, 50.f,1000.f);
 
 
 
@@ -890,9 +889,9 @@ void Render::D3DRenderer::CreateParticleSystem()
 	HRESULT hr = S_OK;
 	Microsoft::WRL::ComPtr<ID3DBlob> VertexBuffer = nullptr;
 
-	hr = CompileShaderFromFile(L"../Shaders/BillboardVS.hlsl", "main", "vs_5_0", VertexBuffer.GetAddressOf(), nullptr);
+	hr = CompileShaderFromFile(L"../Shaders/ParticleVS.hlsl", "main", "vs_5_0", VertexBuffer.GetAddressOf(), nullptr);
 	if (FAILED(hr))
-		HR_T(D3DReadFileToBlob(L"../Shaders/BillboardVS.cso", VertexBuffer.GetAddressOf()));
+		HR_T(D3DReadFileToBlob(L"../Shaders/ParticleVS.cso", VertexBuffer.GetAddressOf()));
 
 	HR_T(m_pDevice->CreateVertexShader(VertexBuffer->GetBufferPointer(),
 		VertexBuffer->GetBufferSize(), NULL, newPS->m_vertexShader.GetAddressOf()));
@@ -952,7 +951,7 @@ void Render::D3DRenderer::CreateParticleSystem()
 
 	// 픽셀 셰이더 생성
 	Microsoft::WRL::ComPtr<ID3DBlob> psBlob;
-	HR_T(D3DReadFileToBlob(L"../Shaders/BillboardPS.cso", psBlob.GetAddressOf()));
+	HR_T(D3DReadFileToBlob(L"../Shaders/ParticlePS.cso", psBlob.GetAddressOf()));
 	HR_T(m_pDevice->CreatePixelShader(psBlob->GetBufferPointer(),
 		psBlob->GetBufferSize(), NULL, newPS->m_pixelShader.GetAddressOf()));
 
@@ -999,7 +998,8 @@ void Render::D3DRenderer::UpdateParticleSystem(float deltaTime)
 {
 	for (auto system : m_particleSystems)
 	{
-		system->mainCam = mainCam.Eye;
+		system->mainCam = &(mainCam.Eye);
+		system->cameraUp = &(mainCam.Up);
 		system->viewMat = &m_View;
 		system->Update(deltaTime);
 	}
@@ -1015,7 +1015,7 @@ void Render::D3DRenderer::RenderPaticleSystem()
 
 	m_pDeviceContext->RSSetState(m_pNoneCullmodeRS.Get());
 	m_pDeviceContext->OMSetBlendState(m_pAlphaBlendState.Get(), blendFactor, 0xffffffff);
-	m_pDeviceContext->OMSetDepthStencilState(m_pZOffDSS.Get(), 1);
+	m_pDeviceContext->OMSetDepthStencilState(m_pZOnDSS.Get(), 1);
 
 	for (auto system : m_particleSystems)
 	{
@@ -1026,11 +1026,11 @@ void Render::D3DRenderer::RenderPaticleSystem()
 		m_pDeviceContext->PSSetShader(system->m_pixelShader.Get(), nullptr, 0);
 		m_pDeviceContext->VSSetConstantBuffers(5, 1, system->_spriteAnimConstantBuffer.GetAddressOf());
 		m_pDeviceContext->PSSetConstantBuffers(5, 1, system->_spriteAnimConstantBuffer.GetAddressOf());
+		m_pDeviceContext->PSSetSamplers(0, 1, m_pSamplerLinear.GetAddressOf());
+
 		for (auto emitter : system->m_emitters)
 		{
-			if(false == _isParticleInstanced)
-				RenderEmitters(emitter);
-			else
+				//RenderEmitters(emitter);
 				RenderEmittersInstanced(emitter);
 		}
 	}
@@ -1040,11 +1040,11 @@ void Render::D3DRenderer::RenderPaticleSystem()
 void Render::D3DRenderer::RenderEmitters(ParticleEmitter* emitter)
 {
 
-	std::sort(emitter->m_activeIndices.begin(), emitter->m_activeIndices.end(),
-		[&](const size_t& idx1, const size_t& idx2)-> bool
-		{
-			return emitter->m_particlePool[idx1].zorder > emitter->m_particlePool[idx2].zorder;
-		});
+	//std::sort(emitter->m_activeIndices.begin(), emitter->m_activeIndices.end(),
+	//	[&](const size_t& idx1, const size_t& idx2)-> bool
+	//	{
+	//		return emitter->m_particlePool[idx1].zorder > emitter->m_particlePool[idx2].zorder;
+	//	});
 	ConstantBuffer cb1;
 	cb1.mWorld = Matrix::Identity;
 	cb1.mView = DirectX::XMMatrixTranspose(m_View);
@@ -1054,36 +1054,30 @@ void Render::D3DRenderer::RenderEmitters(ParticleEmitter* emitter)
 	m_pDeviceContext->PSSetShaderResources(17, 1, emitter->m_defaultTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(18, 1, emitter->m_alphaTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(19, 1, emitter->m_normalTexture.GetAddressOf());
-	for (auto idx : emitter->m_activeIndices)
+	for (int i = 0 ; i < emitter->m_activeCount;i++)
 	{
-		cb1.mWorld = DirectX::XMMatrixTranspose(emitter->m_particlePool[idx].world);
+		cb1.mWorld = DirectX::XMMatrixTranspose(emitter->m_particlePool[i].world);
 		cb1.mView = DirectX::XMMatrixTranspose(m_View);
 		cb1.mProjection = DirectX::XMMatrixTranspose(m_Projection);
 		cb1.EyePos = Vector4(mainCam.Eye.x, mainCam.Eye.y, mainCam.Eye.z, 0);
 		m_pDeviceContext->UpdateSubresource(m_pConstantBuffer.Get(), 0, nullptr, &cb1, 0, 0);
-		m_pDeviceContext->UpdateSubresource(emitter->parentSys->_spriteAnimConstantBuffer.Get(), 0, nullptr, &emitter->m_particlePool[idx]._frameinfo, 0, 0);
+		m_pDeviceContext->UpdateSubresource(emitter->parentSys->_spriteAnimConstantBuffer.Get(), 0, nullptr, &emitter->m_particlePool[i]._frameinfo, 0, 0);
 		m_pDeviceContext->DrawIndexed(6, 0, 0);
 	}
 }
 void Render::D3DRenderer::RenderEmittersInstanced(ParticleEmitter* emitter)
 {
 
-	std::sort(emitter->m_activeIndices.begin(), emitter->m_activeIndices.end(),
-		[&](const size_t& idx1, const size_t& idx2)-> bool
-		{
-			return emitter->m_particlePool[idx1].zorder > emitter->m_particlePool[idx2].zorder;
-		});
-
 	D3D11_MAPPED_SUBRESOURCE mapped;
 	HR_T(m_pDeviceContext->Map(emitter->m_instanceBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
-	memcpy(mapped.pData, emitter->m_instances.data(), sizeof(InstanceData) * emitter->m_activeIndices.size());
+	memcpy(mapped.pData, emitter->m_instances.data(), sizeof(InstanceData) * emitter->m_activeCount);
 	m_pDeviceContext->Unmap(emitter->m_instanceBuffer.Get(), 0);
 	// 셰이더 리소스 바인딩
 	m_pDeviceContext->VSSetShaderResources(0, 1, emitter->m_instanceSRV.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(17, 1, emitter->m_defaultTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(18, 1, emitter->m_alphaTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(19, 1, emitter->m_normalTexture.GetAddressOf());
-	m_pDeviceContext->DrawIndexedInstanced(6, emitter->m_instances.size(), 0, 0, 0);
+	m_pDeviceContext->DrawIndexedInstanced(6, emitter->m_activeCount, 0, 0, 0);
 }
 
 void Render::D3DRenderer::PostProcess()

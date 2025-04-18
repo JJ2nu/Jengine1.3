@@ -10,10 +10,6 @@ struct InstanceData
 
 StructuredBuffer<InstanceData> InstanceBuffer : register(t0); // 인스턴스 데이터 버퍼
 
-
-
-
-
 float2 UVAnimate(float2 uv, float4 AnimParams)
 {
 	
@@ -26,8 +22,6 @@ float2 UVAnimate(float2 uv, float4 AnimParams)
 
     return frameuv;
 }
-
-
 PARTICLE_PS_INPUT main(PARTICLE_VS_INPUT vin)
 {
     PARTICLE_PS_INPUT vout;
@@ -37,7 +31,7 @@ PARTICLE_PS_INPUT main(PARTICLE_VS_INPUT vin)
     
     // 월드 변환 (인스턴스별)
     float4x4 instanceWorld = instance.World;
-    vout.Pos = mul(float4(vin.Pos, 1.0), instanceWorld);
+    vout.Pos = mul(float4(vin.Pos), instanceWorld);
     
     // 뷰/프로젝션 변환
     vout.WorldPos = vout.Pos;
@@ -50,6 +44,7 @@ PARTICLE_PS_INPUT main(PARTICLE_VS_INPUT vin)
     
     
     vout.Tex = UVAnimate(vin.Tex, instance.AnimParams);
+    //vout.Tex = vin.Tex;
     vout.ColorBlend = instance.Color;
     return vout;
 }

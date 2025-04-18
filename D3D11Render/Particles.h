@@ -5,6 +5,7 @@
 #include <wrl/client.h> // ComPtr 사용
 #include <random>
 #include <queue>
+#include <stack>
 using namespace DirectX::SimpleMath;
 
 
@@ -58,6 +59,18 @@ public:
 	float opacity = 1.f;
 	float lifetime = 5.f;
 	float age = 0.f;
+	
+	Vector3 m_startVelocity = Vector3{ 0,0,0 };
+	Vector4 m_startColor = Vector4{ 1,1,1,1 };
+	Vector4 m_endColor = Vector4{ 0.5f,0.5f,0.5f,1 };
+	Vector2 m_startScale = Vector2{ 3.f,3.f };
+	Vector2 m_endScale = Vector2{ 5.f,5.f };
+	float m_startOpacity = 0.5f;
+	float m_endOpacity = 0.0f;
+	float m_lifetime = 5.f;
+	
+	
+	
 	bool active = true;
 
 	size_t index;
@@ -71,7 +84,8 @@ public:
 	Matrix* viewMat = nullptr;
 	float rotateAngle = 0.f;
 	Vector3 axis = Vector3::Zero;
-	Vector3 mainCam;
+	Vector3* mainCam;
+	Vector3* cameraUp;
 
 	class ParticleEmitter* parentEmitter = nullptr;
 	Matrix parentWorld = Matrix::Identity;
@@ -88,7 +102,7 @@ class ParticleEmitter
 {
 public:
 	bool m_Active = true;
-	virtual void Initialize(size_t maxParticles = 100000, float emissionRate = 5.f, Vector3 position = Vector3{ 0,20,0 });
+	virtual void Initialize(size_t maxParticles = 1000000, float emissionRate = 5.f, Vector3 position = Vector3{ 0,20,0 });
 	void InitializeParticle(Particle* particle);
 	virtual void Update(float deltaTime);
 	virtual Vector3 LocateShape() = 0;
@@ -97,20 +111,23 @@ public:
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_normalTexture;
 
 	std::vector<Particle> m_particlePool;  // 실제 파티클 데이터 저장
-	std::queue<size_t> m_inactiveIndices;  // 비활성 인덱스 관리
-	std::vector<size_t> m_activeIndices;   // 활성 인덱스 관리
+	size_t m_activeCount = 0;
+	std::stack<size_t> m_inactiveIndices;
 
     size_t m_maxParticles = 100000;
     float m_emissionRate = 50.f;
     float m_emissionThreshold = 0.f;
 	Vector3 m_emitterPosition = Vector3{ 0,20,0 };
 	Quaternion m_emitterRotation = Quaternion::Identity;
-	Vector3 mainCam;
+	Vector3* mainCam;
+	Vector3* cameraUp;
+
 	Matrix* viewMat = nullptr;
 	Matrix m_rotationMat = Matrix::Identity;
 	Matrix m_translationMat = Matrix::Identity;
 	Matrix m_worldMat = Matrix::Identity;
-
+	SpriteAnimCB m_startFrame = { Vector4(1, 1, 0, 1 )};
+	float m_speed = 10;
 	Vector3 m_startVelocity = Vector3{0,0,0};
 	Vector4 m_startColor = Vector4{1,1,1,1};
 	Vector4 m_endColor = Vector4{0.5f,0.5f,0.5f,1};
@@ -119,7 +136,7 @@ public:
 	float m_startOpacity = 0.5f;
 	float m_endOpacity = 0.0f;
 	float m_lifetime = 5.f;
-
+	Vector3 axis = Vector3::Zero;
 	class ParticleSystem* parentSys;
 
 	std::random_device m_randomizer;
@@ -212,7 +229,9 @@ public:
 	//Microsoft::WRL::ComPtr<ID3D11InputLayout> SetParticleIL();
 	//Microsoft::WRL::ComPtr<ID3D11BlendState> SetParticleBlendState();
 
-	Vector3 mainCam;
+	Vector3* mainCam;
+	Vector3* cameraUp;
+
 	Matrix* viewMat = nullptr;
 
 	std::vector<ParticleVertex> vertices;

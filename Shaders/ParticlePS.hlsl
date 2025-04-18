@@ -35,7 +35,7 @@ float4 main(PARTICLE_PS_INPUT input) : SV_Target
 
     if (length(alpha) > 0)
         output.a = alpha.r;
-	output.a *= colorBlend.w;
+    output.a *= input.ColorBlend.w;
     return output;
 }
 

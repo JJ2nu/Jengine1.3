@@ -23,7 +23,7 @@ namespace Client
 		Engine::Object::Base* CreateObject(std::wstring modelPath);
 		void ObjectAwake(Engine::Object::Base* ob1);
 		void CameraMove();
-		float cameraspeed = 0.5f;
+		float cameraspeed = 0.05f;
 
 		SkyBox* skybox;
 
