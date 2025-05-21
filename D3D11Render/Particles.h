@@ -1,8 +1,8 @@
 #pragma once
-#include <DirectXMath.h>
+//#pragma comment(lib, "DirectXTK.lib")
+//#include <directxtk/SimpleMath.h>
+
 #include <vector>
-#include <d3d11.h>
-#include <wrl/client.h> // ComPtr »ç¿ë
 #include <random>
 #include <queue>
 #include <stack>
@@ -19,11 +19,6 @@ enum class LocationShape
 	TORUS,
 	SURFACE
 
-};
-struct SpriteAnimCB
-{
-	Vector4 frameCnt = { 1,1,0,1 };
-	Vector4 blendColor = { 1.f,1.f,1.f,0.5f };
 };
 
 struct InstanceData {
@@ -81,7 +76,7 @@ public:
 	Matrix rotationMat = Matrix::Identity;
 	Matrix translationMat = Matrix::Identity;
 	Matrix world = Matrix::Identity;
-	Matrix* viewMat = nullptr;
+	Matrix viewMat = Matrix::Identity;
 	float rotateAngle = 0.f;
 	Vector3 axis = Vector3::Zero;
 	Vector3* mainCam;
@@ -90,7 +85,7 @@ public:
 	class ParticleEmitter* parentEmitter = nullptr;
 	Matrix parentWorld = Matrix::Identity;
 	//sprite animation
-	SpriteAnimCB _frameinfo;
+	Vector4 frameinfo = Vector4(1,1,0,1);
 	float _animTimer = 0.f;
 	float _animDuration = 1.f / 24.f;
 	bool _bIsLoop = true;
@@ -103,9 +98,12 @@ class ParticleEmitter
 public:
 	bool m_Active = true;
 	virtual void Initialize(size_t maxParticles = 1000000, float emissionRate = 5.f, Vector3 position = Vector3{ 0,20,0 });
+	void InitializeParticle(int idx);
 	void InitializeParticle(Particle* particle);
 	virtual void Update(float deltaTime);
+	virtual void UpdateParticles(float deltaTime, int idx);
 	virtual Vector3 LocateShape() = 0;
+	void ViewSpaceSort();
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_defaultTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_alphaTexture;
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_normalTexture;
@@ -114,7 +112,7 @@ public:
 	size_t m_activeCount = 0;
 	std::stack<size_t> m_inactiveIndices;
 
-    size_t m_maxParticles = 100000;
+    size_t m_maxParticles = 1000000;
     float m_emissionRate = 50.f;
     float m_emissionThreshold = 0.f;
 	Vector3 m_emitterPosition = Vector3{ 0,20,0 };
@@ -122,11 +120,11 @@ public:
 	Vector3* mainCam;
 	Vector3* cameraUp;
 
-	Matrix* viewMat = nullptr;
+	Matrix viewMat = Matrix::Identity;
 	Matrix m_rotationMat = Matrix::Identity;
 	Matrix m_translationMat = Matrix::Identity;
 	Matrix m_worldMat = Matrix::Identity;
-	SpriteAnimCB m_startFrame = { Vector4(1, 1, 0, 1 )};
+	Vector4 m_startFrame = { 1,1,0,1 };
 	float m_speed = 10;
 	Vector3 m_startVelocity = Vector3{0,0,0};
 	Vector4 m_startColor = Vector4{1,1,1,1};
@@ -137,16 +135,60 @@ public:
 	float m_endOpacity = 0.0f;
 	float m_lifetime = 5.f;
 	Vector3 axis = Vector3::Zero;
+	float _animDuration = 1 / 24.f;
 	class ParticleSystem* parentSys;
+
+
+	//particle attributes
+	std::vector<Vector3> position;
+	std::vector<Vector3> velocity;
+	std::vector<Vector4> color;
+	std::vector<Vector2> scale ;
+	std::vector<float> opacity;
+	std::vector<float> lifetime;
+	std::vector<float> age;
+	std::vector<Vector4> startColor;
+	std::vector<Vector4> endColor ;
+	std::vector<Vector2> startScale ;
+	std::vector<Vector2> endScale ;
+	std::vector<float> startOpacity;
+	std::vector<float> endOpacity;
+
+	std::vector<Vector4> frameinfo;
+	std::vector<float> animTimer;
+	bool bIsLoop = true;
+	
+	std::vector<Matrix> scaleMat;
+	std::vector<Matrix> rotationMat;
+	std::vector<Matrix> translationMat;
+	std::vector<Matrix> worldMat;
+	std::vector<float> zorder;
+	float rotateAngle = 0.f;
+
+	void SwapVectors(int i, int j);
+
+
+
+	std::vector<Vector4> agebuf;
+
 
 	std::random_device m_randomizer;
 	std::mt19937 m_randomGenerator;
 	std::uniform_real_distribution<float> m_randomRange0to1;
 	std::function<float()> m_randomVal;
 
-	std::vector<InstanceData> m_instances;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instanceBuffer;
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_instanceSRV;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instanceMat;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_instanceMatSRV;
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instanceAnim;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_instanceAnimSRV;
+	
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instanceColor;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_instanceColorSRV;
+
+	Microsoft::WRL::ComPtr<ID3D11Buffer> m_instanceAge;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_instanceAgeSRV;
+
 };
 class SphereEmitter : public ParticleEmitter
 {
@@ -200,12 +242,13 @@ public:
 	}
 	void Initialize(size_t maxParticles = 100000, float emissionRate = 5.f, Vector3 position = Vector3{ 0,20,0 }) override;
 	class Render::Model* targetModel = nullptr;
+	float randomOffset = 1.f;
 	std::vector<Vector3> vertices;
 	std::uniform_int_distribution<int> m_randomRangeVertexIndex;
 	std::function<int()> m_randomIndex;
 	Vector3 LocateShape() override;
 	void Update(float deltaTime) override;
-
+	Vector3 modelScale = { 1,1,1 };
 };
 class ParticleSystem
 {
@@ -232,7 +275,7 @@ public:
 	Vector3* mainCam;
 	Vector3* cameraUp;
 
-	Matrix* viewMat = nullptr;
+	Matrix viewMat = Matrix::Identity;
 
 	std::vector<ParticleVertex> vertices;
 	std::vector<UINT> indices;

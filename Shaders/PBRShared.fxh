@@ -18,6 +18,7 @@ SamplerState samLinear : register(s0);
 //SamplerState spBRDF_Sampler : register(s2);
 SamplerComparisonState samplerComparison : register(s3);
 
+
 //deferred
 Texture2D deferredAlbedo : register(t12);
 Texture2D deferredNormal : register(t13);

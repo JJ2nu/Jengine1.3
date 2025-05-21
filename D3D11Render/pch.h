@@ -13,18 +13,20 @@
 #include <memory>
 #include <map>
 
-#include <wrl.h>
+#define DIRECTX_TOOLKIT_IMPORT
+#pragma comment(lib, "DirectXTK.lib")
 #include <directxtk/simplemath.h>
+
+#include <wrl.h>
 #include <d3dcompiler.h>
-#include <imgui.h>
-#include <imgui_impl_win32.h>
-#include <imgui_impl_dx11.h>
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#pragma comment(lib, "DirectXTK.lib")
 
 #include <DirectXTex.h>
 

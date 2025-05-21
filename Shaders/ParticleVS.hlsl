@@ -8,7 +8,10 @@ struct InstanceData
     float4 Color;
 };
 
-StructuredBuffer<InstanceData> InstanceBuffer : register(t0); // 인스턴스 데이터 버퍼
+StructuredBuffer<float4x4> InstanceBuffer : register(t0); // 인스턴스 데이터 버퍼
+StructuredBuffer<float4> AnimBuffer : register(t1); // 인스턴스 데이터 버퍼
+StructuredBuffer<float4> ColorBuffer : register(t2); // 인스턴스 데이터 버퍼
+StructuredBuffer<float4> age : register(t3); // 인스턴스 데이터 버퍼
 
 float2 UVAnimate(float2 uv, float4 AnimParams)
 {
@@ -27,10 +30,8 @@ PARTICLE_PS_INPUT main(PARTICLE_VS_INPUT vin)
     PARTICLE_PS_INPUT vout;
     
     // 인스턴스 데이터 가져오기
-    InstanceData instance = InstanceBuffer[vin.InstanceID];
-    
+    float4x4 instanceWorld = InstanceBuffer[vin.InstanceID];
     // 월드 변환 (인스턴스별)
-    float4x4 instanceWorld = instance.World;
     vout.Pos = mul(float4(vin.Pos), instanceWorld);
     
     // 뷰/프로젝션 변환
@@ -40,11 +41,9 @@ PARTICLE_PS_INPUT main(PARTICLE_VS_INPUT vin)
     vout.Norm = normalize(mul(normalize(vin.Norm), (float3x3) instanceWorld));
     vout.Tangent = normalize(mul(normalize(vin.Tangent), (float3x3) instanceWorld));
     vout.Binormal = normalize(mul(normalize(vin.Binormal), (float3x3) instanceWorld));
+    vout.Tex = UVAnimate(vin.Tex, AnimBuffer[vin.InstanceID]);
+    vout.ColorBlend = ColorBuffer[vin.InstanceID];
+    vout.PosShadow = age[vin.InstanceID];
 
-    
-    
-    vout.Tex = UVAnimate(vin.Tex, instance.AnimParams);
-    //vout.Tex = vin.Tex;
-    vout.ColorBlend = instance.Color;
     return vout;
 }

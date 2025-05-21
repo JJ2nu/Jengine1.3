@@ -137,18 +137,31 @@ float4 main(PS_INPUT pin) : SV_Target
 
     float4 final = float4(pow(float3((shadowFactor * directLighting) + (ambientLighting * mat.metalness.y)), 1.0 / 2.2), 1.0);
 
-    float4 emissive = txEmissive.Sample(samLinear, pin.Tex);
-    if (length(emissive))
-        final += emissive;
+    //float4 emissive = txEmissive.Sample(samLinear, pin.Tex);
+    //if (length(emissive))
+    //    final += emissive;
 
-    if (length(opacity))
-        final.a = opacity.a;
-    else
-        final.a = 1.0f;
-    if (final.a < 0.01)
-        discard;
+    //if (length(opacity))
+    //    final.a = opacity.a;
+    //else
+    //    final.a = 1.0f;
+    //if (final.a < 0.01)
+    //    discard;
 
+    
+    
+    
+    
+    float3 V = EyePos - pin.WorldPos;
+    V = normalize(V);
+    float intensity = 0.5f;
+    float factor = pow(max(0, 1 - (dot(V, N))), intensity);
+   
+    final = factor * float4(0, 0.3, 0.6, 0.5f);
+    final.a = 1;
     return final;
+    
+    
 }
 
 

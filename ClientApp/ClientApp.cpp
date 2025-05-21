@@ -2,7 +2,7 @@
 #include "SkyBox.h"
 #include <algorithm>
 #include <complex>
-#include <imgui.h>
+#include "imgui.h"
 #include <memory>
 
 Client::ClientApp::ClientApp(HINSTANCE hInstance)
@@ -19,44 +19,85 @@ Client::ClientApp::~ClientApp()
 bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 {
 	__super::Initialize(Width, Height);
-	skybox = new SkyBox();
-	skybox->Initialize(this, L"../Resource/skybox.fbx");
+	//skybox = new SkyBox();
+	//skybox->Initialize(this, L"../Resource/skybox.fbx");
 
 
 	//auto ob1 = CreateObject(L"../Resource/SkinningTest2.fbx");
-	auto ob1 = CreateObject(L"../Resource/SkinningTest2.fbx");
-	ob1->model->hasBones = false;
+	//auto ob1 = CreateObject(L"../Resource/spaceship.fbx");
+	auto ob1 = CreateObject(L"../Resource/Artorias_Sword.fbx");
+	ob1->model->hasBones = true;
 	ob1->model->isStaticMesh = true;
 
 	ObjectAwake(ob1);
-	ob1->Location = { 0, 10, 350 };
+	ob1->Location = { 0, 10, 1000 };
+
+
+	//auto wall1 = CreateObject(L"../Resource/BigwindowWall_Clear.fbx");
+	//wall1->model->hasBones = false;
+	//wall1->model->isStaticMesh = true;
+	//ObjectAwake(wall1);
+	//wall1->Location = { 50, 10, 350 };
+	//wall1->Scale = { 0.2f,0.2f,0.2f };
+	//auto wall2 = CreateObject(L"../Resource/Wall_Test.fbx");
+	//wall2->model->hasBones = false;
+	//wall2->model->isStaticMesh = true;
+	//ObjectAwake(wall2);
+	//wall2->Location = { -50, 10, 350 };
+	//ob1->Scale = { 0.2f, 0.2f, 0.2f };
 	//ob1->Rotation = { 0,89.5f,0 };
 
-	auto ob3 = CreateObject(L"../Resource/Ground.fbx");
-	ob3->model->isStaticMesh = true;
-	ob3->model->hasBones = false;
-	ob3->model->usePBR = true;
-	//ob3->Scale = { 2.f,1.f,2.f };
-	ObjectAwake(ob3);
+	//auto ob3 = CreateObject(L"../Resource/Ground.fbx");
+	//ob3->model->isStaticMesh = true;
+	//ob3->model->hasBones = false;
+	//ob3->model->usePBR = true;
+	////ob3->Scale = { 2.f,1.f,2.f };
+	//ObjectAwake(ob3);
 
 
 	//m_Renderer->CreateParticleSystem();
 	//m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::TORUS);
 	//m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[0]);
-	//m_Renderer->SetParticleTexture(0, 0, L"../Resource/Explosion_01.jpg",
-	//	L"../Resource/Explosion_01_a.jpg", L"");
+	//m_Renderer->SetParticleTexture(0, 0, L"../Resource/defaultSmoke.jpg",
+	//	L"../Resource/defaultSmoke.jpg", L"");
+	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_maxParticles = 100;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emitterPosition = Vector3(0, 0, 350);
-	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 2000.f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 1;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5, 5);
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5, 5);
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startOpacity = 0.07f;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endOpacity = 0.f;
 	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_lifetime = 5.f;
-	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32)};
-	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->isDisc = true;
+	////m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32)};
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->isDisc = false;
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->innerRadius = 100;
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->outerRadius = 110;
+
+	//m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::SPHERE);
+	//m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[1]);
+	//m_Renderer->SetParticleTexture(0, 1, L"../Resource/defaultSmoke.jpg",
+	//	L"../Resource/defaultSmoke.jpg", L"");
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_maxParticles = 100;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_emitterPosition = Vector3(0, 0, 350);
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_emissionRate = 1;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_startScale = Vector2(5, 5);
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_endScale = Vector2(5, 5);
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_startOpacity = 0.07f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_endOpacity = 0.f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_lifetime = 5.f;
+	////m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32)};
+	////static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->isDisc = false;
+	////static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->innerRadius = 100;
+	////static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->outerRadius = 110;
+
+
+
+
+
 
 
 	std::vector<Vector3> meshVertices;
+	std::vector<UINT> meshIndices;
 	if (false == ob1->model->isStaticMesh)
 	{
 		for (auto& mesh : ob1->model->m_meshes)
@@ -65,25 +106,53 @@ bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 			{
 				meshVertices.push_back(Vector3(vertex.position.x, vertex.position.y, vertex.position.z));
 			}
+			for (auto& index : mesh->indices)
+			{
+				meshIndices.push_back(index);
+			}
 		}
 	}
 	else
 	{
-		for (auto mesh : ob1->model->m_meshes)
+		for (auto mesh : ob1->model->m_skeletalMeshes)
 		{
-			for (auto vertex : mesh->vertices)
+			for (auto vertex : mesh->m_BoneVertices)
 			{
 				meshVertices.push_back(Vector3(vertex.position.x, vertex.position.y, vertex.position.z));
 			}
+			for (auto& index : mesh->indices)
+			{
+				meshIndices.push_back(index);
+			}
 		}
 	}
+	for (int i = 0; i < meshIndices.size();i += 3)
+	{
+		auto newVector = (meshVertices[meshIndices[i]] + meshVertices[meshIndices[i + 1]] + meshVertices[meshIndices[i + 2]]) * 0.333f;
+		auto newVector1 = (meshVertices[meshIndices[i]] + newVector) * 0.5f;
+		auto newVector2 = (meshVertices[meshIndices[i+1]] + newVector) * 0.5f;
+		auto newVector3 = (meshVertices[meshIndices[i+2]] + newVector) * 0.5f;
+
+		auto newVector4 = (meshVertices[meshIndices[i]] + meshVertices[meshIndices[i+2]] ) * 0.5f;
+		auto newVector5 = (meshVertices[meshIndices[i+1]] + meshVertices[meshIndices[i+2]] ) * 0.5f;
+		auto newVector6 = (meshVertices[meshIndices[i+1]] + meshVertices[meshIndices[i]] ) * 0.5f;
+		meshVertices.push_back(newVector);
+		meshVertices.push_back(newVector1);
+		meshVertices.push_back(newVector2);
+		meshVertices.push_back(newVector3);
+		meshVertices.push_back(newVector4);
+		meshVertices.push_back(newVector5);
+		meshVertices.push_back(newVector6);
+	}
+
 	m_Renderer->CreateParticleSystem();
 	m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::SURFACE, meshVertices);
 	m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[0]);
 
-	m_Renderer->SetParticleTexture(0, 0, L"../Resource/Explosion_01.jpg",
-		L"../Resource/Explosion_01_a.jpg", L"");
+	m_Renderer->SetParticleTexture(0, 0, L"../Resource/defaultSmoke.jpg",
+		L"../Resource/defaultSmoke.jpg", L"");
 	static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->targetModel = ob1->model;
+	static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->modelScale = { 0.2f,0.2f,0.2f };
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_emissionRate = 1000.f;
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startScale = Vector2(5, 5);
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endScale = Vector2(5, 5);
@@ -91,7 +160,27 @@ bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startOpacity = 0.07f;
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_endOpacity = 0.f;
 	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_lifetime = 5.f;
-	m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32) };
+	//m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32) };
+
+	//m_Renderer->m_particleSystems[0]->CreateEmitter(LocationShape::TORUS);
+	//m_Renderer->CreateEmitterInstanceBuffer(m_Renderer->m_particleSystems[0]->m_emitters[1]);
+	//m_Renderer->SetParticleTexture(0, 1, L"../Resource/defaultSmoke.jpg",
+	//	L"../Resource/defaultSmoke.jpg", L"");
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_maxParticles = 100;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_emitterPosition = Vector3(0, 10, 350);
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_emissionRate = 1000.f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_startScale = Vector2(5, 5);
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_endScale = Vector2(5, 5);
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_startOpacity = 0.07f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_endOpacity = 0.f;
+	//m_Renderer->m_particleSystems[0]->m_emitters[1]->m_lifetime = 5.f;
+	////m_Renderer->m_particleSystems[0]->m_emitters[0]->m_startFrame = { Vector4(8,4,0,32)};
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[1])->isDisc = false;
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[1])->innerRadius = 100;
+	//static_cast<TorusEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[1])->outerRadius = 110;
+
+
+
 
 
 
@@ -102,10 +191,42 @@ bool Client::ClientApp::Initialize(UINT Width, UINT Height)
 
 void Client::ClientApp::Update(float deltaTime)
 {
-
 	CameraMove();
+	
+	
+	if (m_input->IsKeyPressed(DIK_L))
+	{
+		lerpflag *= -1;
+	}
+	particleoffset += deltaTime * lerpflag*3000.f;
+	if (particleoffset < 1)
+		particleoffset = 1.f;
+	else if (particleoffset > 5000.f)
+		particleoffset = 5000.f;
+	static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->randomOffset = particleoffset;
 
-	skybox->Update(deltaTime);
+
+
+
+	//if (m_input->IsKeyPressed(DIK_K))
+	//{
+	//	emitterrotateflag = (emitterrotateflag == false);
+	//	
+	//}
+	//if (emitterrotateflag)
+	//{
+	//	emitterRotation.z += deltaTime;
+	//	if (emitterRotation.z >= DirectX::XM_PI * 2)
+	//	{
+	//		emitterRotation.z -= DirectX::XM_PI * 2;
+	//	}
+	//	static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->m_emitterRotation = Quaternion::CreateFromYawPitchRoll(emitterRotation);
+	//}
+
+
+
+	static_cast<SurfaceEmitter*>(m_Renderer->m_particleSystems[0]->m_emitters[0])->modelScale = m_Renderer->modelimguiscale;
+	//skybox->Update(deltaTime);
 
 	for(auto obj : objectList)
 	{
@@ -146,8 +267,8 @@ void Client::ClientApp::Render(int windowIdx)
 		if (m_Renderer->deferredflag)
 		{
 			m_Renderer->BeginDeferred();
-			skybox->defferedflag = true;
-			skybox->DeferredRender(windowIdx);
+			//skybox->defferedflag = true;
+			//skybox->DeferredRender(windowIdx);
 			for (auto obj : renderList)
 			{
 				obj->defferedflag = true;
@@ -158,7 +279,7 @@ void Client::ClientApp::Render(int windowIdx)
 		else
 		{
 			m_Renderer->BeginRender(windowIdx);
-			skybox->Render(windowIdx);
+			//skybox->Render(windowIdx);
 			for (auto obj : renderList)
 			{
 				obj->Render(windowIdx);
@@ -208,7 +329,7 @@ Engine::Object::Base* Client::ClientApp::CreateObject(std::wstring modelPath)
 void Client::ClientApp::ObjectAwake(Engine::Object::Base* ob1)
 {
 	ob1->ImportModel();
-	if (ob1->model->usePBR)
+	//if (ob1->model->usePBR)
 	{
 		ob1->vertexShaderPath = L"../Shaders/PBRVertexShader.hlsl";
 		ob1->pixelShaderPath = L"../Shaders/PBRPixelShader.cso";
@@ -283,5 +404,14 @@ void Client::ClientApp::CameraMove()
 
 		if (m_input->IsKeyPressed(DIK_J) || m_input->IsKeyHold(DIK_J)) Engine::Time::timeScale += 0.1f;
 		if (m_input->IsKeyPressed(DIK_K) || m_input->IsKeyHold(DIK_K)) Engine::Time::timeScale -= 0.1f;
+
+	
+
+
 	}
+}
+
+void Client::ClientApp::offsetLerp(float delta)
+{
+
 }

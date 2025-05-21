@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #pragma comment(lib, "Jengine1.0.lib")
 #include "../Jengine1.0/pch.h"
 
@@ -24,6 +25,14 @@ namespace Client
 		void ObjectAwake(Engine::Object::Base* ob1);
 		void CameraMove();
 		float cameraspeed = 0.05f;
+
+
+		//test
+		void offsetLerp(float delta);
+		float particleoffset = 20.f;
+		float lerpflag = 1.f;
+		Vector3 emitterRotation = { 0,0,0 };
+		bool emitterrotateflag = false;
 
 		SkyBox* skybox;
 

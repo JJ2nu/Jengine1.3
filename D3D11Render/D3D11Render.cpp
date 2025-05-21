@@ -146,6 +146,14 @@ void Render::D3DRenderer::BeginRender(int windowIdx)
 	m_pDeviceContext->UpdateSubresource(m_pShadowConstantBuffer.Get(), 0, nullptr, &shadowTB, 0, 0);
 	m_pDeviceContext->VSSetConstantBuffers(2, 1, m_pShadowConstantBuffer.GetAddressOf());
 
+
+
+	if (_isParticleInstanced)
+		m_pDeviceContext->RSSetState(m_pNoneCullmodeRS.Get());
+	else
+		m_pDeviceContext->RSSetState(m_pBackCullmodeRS.Get());
+
+
 }
 void Render::D3DRenderer::Render(int windowIdx, const Mesh* mesh, const Node* node, const Model* model)
 {
@@ -270,6 +278,11 @@ void Render::D3DRenderer::BeginShade(int windowIdx)
 	m_pDeviceContext->PSSetShader(NULL, NULL, 0);
 
 	m_pDeviceContext->RSSetViewports(1, &m_shadowViewport);
+
+	if (_isParticleInstanced)
+		m_pDeviceContext->RSSetState(m_pNoneCullmodeRS.Get());
+	else
+		m_pDeviceContext->RSSetState(m_pBackCullmodeRS.Get());
 }
 void Render::D3DRenderer::Shade(int windowIdx, const Mesh* mesh, const Node* node, const Model* model)
 {
@@ -382,25 +395,21 @@ void Render::D3DRenderer::ImguiRender()
 			prevrect = currect;
 		}
 
-		ImGui::Checkbox("Use Instancing", &_isParticleInstanced);
-
-		ImGui::Checkbox("Use Deferred", &deferredflag);
 		ImGui::Checkbox("Use Bloom", &bloomflag);
 
-		ImGui::Checkbox("normalmap", (bool*) & m_ptestlight.mb.ambient.x);
 		ImGui::SliderFloat("bloomThreshold", &bloomThreshold, 0.0f, 1.0f);
 		ImGui::SliderFloat("bloomintensity", &bloomIntensity, 0.0f, 100.0f);
 		ImGui::SliderInt("blurradius", &bloomblur, 1, 54);
-
-		ImGui::SliderFloat4("lightDirection 0", reinterpret_cast<float*>(&m_ptestlight.lb[0].lightDir), -1.0f, 1.0f);
 
 		ImGui::Text("\n");
 
 		//변수 임시 재활용 ambient -> metalness , diffuse -> roughness
 		ImGui::SliderFloat("useIBL ", &m_ptestlight.mb.ambient.y, 0.f, 1.0f);
 		
+		ImGui::SliderFloat3("model scale", (float*)&modelimguiscale,0.01f,1.f);
 		
-		ImGui::Text("particle count %d", m_particleSystems[0]->m_emitters[0]->m_activeCount);
+		ImGui::Text("particle offset %f", static_cast<SurfaceEmitter*>(m_particleSystems[0]->m_emitters[0])->randomOffset);
+		//ImGui::SliderFloat("particle random offset", &static_cast<SurfaceEmitter*>(m_particleSystems[0]->m_emitters[0])->randomOffset, 50.f, 500.f);
 		ImGui::SliderFloat("emit rate", &m_particleSystems[0]->m_emitters[0]->m_emissionRate, 1.f, 100000.0f);
 		ImGui::SliderFloat3("emit vector", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[0]->m_startVelocity), -1.f, 1.f);
 		ImGui::SliderFloat("emit speed", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[0]->m_speed), 1.f, 100.f);
@@ -411,8 +420,29 @@ void Render::D3DRenderer::ImguiRender()
 		ImGui::SliderFloat("particle start opacity", &m_particleSystems[0]->m_emitters[0]->m_startOpacity, 0.f, 1.f);
 		ImGui::SliderFloat("particle end opacity", &m_particleSystems[0]->m_emitters[0]->m_endOpacity, 0.f, 1.f);
 		ImGui::SliderFloat("particle lifetime", &m_particleSystems[0]->m_emitters[0]->m_lifetime, 1.f, 10.f);
-		ImGui::SliderFloat("Torus inner radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[0])->innerRadius, 0.1f,100.f);
-		ImGui::SliderFloat("Torus outer radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[0])->outerRadius, 50.f,1000.f);
+		/*
+		ImGui::SliderFloat("Torus inner radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[0])->innerRadius, 0.1f, 100.f);
+		ImGui::SliderFloat("Torus outer radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[0])->outerRadius, 50.f, 1000.f);*/
+
+
+		//ImGui::Text("\n");
+
+		//ImGui::SliderFloat("emit1 rate", &m_particleSystems[0]->m_emitters[1]->m_emissionRate, 1.f, 100000.0f);
+		//ImGui::SliderFloat3("emit1 vector", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[1]->m_startVelocity), -1.f, 1.f);
+		//ImGui::SliderFloat("emit1 speed", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[1]->m_speed), 1.f, 100.f);
+		//ImGui::ColorEdit3("particle1 start color", (float*)&m_particleSystems[0]->m_emitters[1]->m_startColor); // Edit 3 floats representing a color	
+		//ImGui::ColorEdit3("particle1 end color", (float*)&m_particleSystems[0]->m_emitters[1]->m_endColor); // Edit 3 floats representing a color	
+		//ImGui::SliderFloat2("particle1 start scale", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[1]->m_startScale), 0.0f, 1000.0f);
+		//ImGui::SliderFloat2("particle1 end scale", reinterpret_cast<float*>(&m_particleSystems[0]->m_emitters[1]->m_endScale), 0.0f, 1000.0f);
+		//ImGui::SliderFloat("particle1 start opacity", &m_particleSystems[0]->m_emitters[1]->m_startOpacity, 0.f, 1.f);
+		//ImGui::SliderFloat("particle1 end opacity", &m_particleSystems[0]->m_emitters[1]->m_endOpacity, 0.f, 1.f);
+		//ImGui::SliderFloat("particle1 lifetime", &m_particleSystems[0]->m_emitters[1]->m_lifetime, 1.f, 10.f);
+		//ImGui::SliderFloat("inner radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[1])->innerRadius, 50.f, 1000.f);
+		//ImGui::SliderFloat("outer radius", &static_cast<TorusEmitter*>(m_particleSystems[0]->m_emitters[1])->outerRadius, 50.f, 1000.f);
+
+
+
+
 
 
 
@@ -879,13 +909,6 @@ void Render::D3DRenderer::CreateParticleSystem()
 	ibData.pSysMem = newPS->indices.data();
 	HR_T(m_pDevice->CreateBuffer(&ibDesc, &ibData, newPS->_indexBuffer.GetAddressOf()));
 
-	D3D11_BUFFER_DESC cbDesc = {};
-	cbDesc.Usage = D3D11_USAGE_DEFAULT;
-	cbDesc.ByteWidth = sizeof(SpriteAnimCB);
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = 0;
-	HR_T(m_pDevice->CreateBuffer(&cbDesc, nullptr, newPS->_spriteAnimConstantBuffer.GetAddressOf()));
-	
 	HRESULT hr = S_OK;
 	Microsoft::WRL::ComPtr<ID3DBlob> VertexBuffer = nullptr;
 
@@ -960,19 +983,21 @@ void Render::D3DRenderer::CreateParticleSystem()
 }
 void Render::D3DRenderer::CreateEmitterInstanceBuffer(ParticleEmitter* _emitter)
 {
+	
+
 	D3D11_BUFFER_DESC instanceBufferDesc = {};
-	instanceBufferDesc.ByteWidth = sizeof(InstanceData) * _emitter->m_maxParticles;
+	instanceBufferDesc.ByteWidth = sizeof(Matrix) * _emitter->m_maxParticles;
 	instanceBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	instanceBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	instanceBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	instanceBufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	instanceBufferDesc.StructureByteStride = sizeof(InstanceData);
+	instanceBufferDesc.StructureByteStride = sizeof(Matrix);
 
 	D3D11_SUBRESOURCE_DATA instanceData = {};
-	_emitter->m_instances.resize(_emitter->m_maxParticles);
-	instanceData.pSysMem = _emitter->m_instances.data();
+	_emitter->worldMat.resize(_emitter->m_maxParticles);
+	instanceData.pSysMem = _emitter->worldMat.data();
 	HR_T(m_pDevice->CreateBuffer(&instanceBufferDesc, &instanceData,
-		_emitter->m_instanceBuffer.GetAddressOf()));
+		_emitter->m_instanceMat.GetAddressOf()));
 
 	// Shader Resource View 생성 추가
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -980,8 +1005,83 @@ void Render::D3DRenderer::CreateEmitterInstanceBuffer(ParticleEmitter* _emitter)
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	srvDesc.Buffer.FirstElement = 0;
 	srvDesc.Buffer.NumElements = _emitter->m_maxParticles;
-	HR_T(m_pDevice->CreateShaderResourceView(_emitter->m_instanceBuffer.Get(),
-		&srvDesc, _emitter->m_instanceSRV.GetAddressOf()));
+	HR_T(m_pDevice->CreateShaderResourceView(_emitter->m_instanceMat.Get(),
+		&srvDesc, _emitter->m_instanceMatSRV.GetAddressOf()));
+
+
+
+
+	D3D11_BUFFER_DESC instanceBufferDesc1 = {};
+	instanceBufferDesc1.ByteWidth = sizeof(Vector4) * _emitter->m_maxParticles;
+	instanceBufferDesc1.Usage = D3D11_USAGE_DYNAMIC;
+	instanceBufferDesc1.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	instanceBufferDesc1.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	instanceBufferDesc1.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	instanceBufferDesc1.StructureByteStride = sizeof(Vector4);
+
+	D3D11_SUBRESOURCE_DATA instanceData1 = {};
+	_emitter->frameinfo.resize(_emitter->m_maxParticles);
+	instanceData1.pSysMem = _emitter->frameinfo.data();
+	HR_T(m_pDevice->CreateBuffer(&instanceBufferDesc1, &instanceData1,
+		_emitter->m_instanceAnim.GetAddressOf()));
+
+	// Shader Resource View 생성 추가
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc1 = {};
+	srvDesc1.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc1.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc1.Buffer.FirstElement = 0;
+	srvDesc1.Buffer.NumElements = _emitter->m_maxParticles;
+	HR_T(m_pDevice->CreateShaderResourceView(_emitter->m_instanceAnim.Get(),
+		&srvDesc1, _emitter->m_instanceAnimSRV.GetAddressOf()));
+
+
+	D3D11_BUFFER_DESC instanceBufferDesc2 = {};
+	instanceBufferDesc2.ByteWidth = sizeof(Vector4) * _emitter->m_maxParticles;
+	instanceBufferDesc2.Usage = D3D11_USAGE_DYNAMIC;
+	instanceBufferDesc2.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	instanceBufferDesc2.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	instanceBufferDesc2.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	instanceBufferDesc2.StructureByteStride = sizeof(Vector4);
+
+	D3D11_SUBRESOURCE_DATA instanceData2= {};
+	_emitter->color.resize(_emitter->m_maxParticles);
+	instanceData2.pSysMem = _emitter->color.data();
+	HR_T(m_pDevice->CreateBuffer(&instanceBufferDesc2, &instanceData2,
+		_emitter->m_instanceColor.GetAddressOf()));
+
+	// Shader Resource View 생성 추가
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc2 = {};
+	srvDesc2.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc2.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc2.Buffer.FirstElement = 0;
+	srvDesc2.Buffer.NumElements = _emitter->m_maxParticles;
+	HR_T(m_pDevice->CreateShaderResourceView(_emitter->m_instanceColor.Get(),
+		&srvDesc2, _emitter->m_instanceColorSRV.GetAddressOf()));
+
+	D3D11_BUFFER_DESC instanceBufferDesc3 = {};
+	instanceBufferDesc3.ByteWidth = sizeof(Vector4) * _emitter->m_maxParticles;
+	instanceBufferDesc3.Usage = D3D11_USAGE_DYNAMIC;
+	instanceBufferDesc3.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	instanceBufferDesc3.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	instanceBufferDesc3.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	instanceBufferDesc3.StructureByteStride = sizeof(Vector4);
+
+	D3D11_SUBRESOURCE_DATA instanceData3 = {};
+	_emitter->agebuf.resize(_emitter->m_maxParticles);
+	instanceData3.pSysMem = _emitter->agebuf.data();
+	HR_T(m_pDevice->CreateBuffer(&instanceBufferDesc3, &instanceData3,
+		_emitter->m_instanceAge.GetAddressOf()));
+
+	// Shader Resource View 생성 추가
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc3 = {};
+	srvDesc3.Format = DXGI_FORMAT_UNKNOWN;
+	srvDesc3.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	srvDesc3.Buffer.FirstElement = 0;
+	srvDesc3.Buffer.NumElements = _emitter->m_maxParticles;
+	HR_T(m_pDevice->CreateShaderResourceView(_emitter->m_instanceAge.Get(),
+		&srvDesc3, _emitter->m_instanceAgeSRV.GetAddressOf()));
+
+
 }
 void Render::D3DRenderer::SetParticleTexture(size_t sysIndex, size_t emitIndex , std::wstring defaultpath, std::wstring alphapath, std::wstring normalpath)
 {
@@ -1000,7 +1100,7 @@ void Render::D3DRenderer::UpdateParticleSystem(float deltaTime)
 	{
 		system->mainCam = &(mainCam.Eye);
 		system->cameraUp = &(mainCam.Up);
-		system->viewMat = &m_View;
+		system->viewMat = m_View;
 		system->Update(deltaTime);
 	}
 }
@@ -1024,8 +1124,6 @@ void Render::D3DRenderer::RenderPaticleSystem()
 		m_pDeviceContext->IASetIndexBuffer(system->_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 		m_pDeviceContext->VSSetShader(system->m_vertexShader.Get(), nullptr, 0);
 		m_pDeviceContext->PSSetShader(system->m_pixelShader.Get(), nullptr, 0);
-		m_pDeviceContext->VSSetConstantBuffers(5, 1, system->_spriteAnimConstantBuffer.GetAddressOf());
-		m_pDeviceContext->PSSetConstantBuffers(5, 1, system->_spriteAnimConstantBuffer.GetAddressOf());
 		m_pDeviceContext->PSSetSamplers(0, 1, m_pSamplerLinear.GetAddressOf());
 
 		for (auto emitter : system->m_emitters)
@@ -1061,19 +1159,45 @@ void Render::D3DRenderer::RenderEmitters(ParticleEmitter* emitter)
 		cb1.mProjection = DirectX::XMMatrixTranspose(m_Projection);
 		cb1.EyePos = Vector4(mainCam.Eye.x, mainCam.Eye.y, mainCam.Eye.z, 0);
 		m_pDeviceContext->UpdateSubresource(m_pConstantBuffer.Get(), 0, nullptr, &cb1, 0, 0);
-		m_pDeviceContext->UpdateSubresource(emitter->parentSys->_spriteAnimConstantBuffer.Get(), 0, nullptr, &emitter->m_particlePool[i]._frameinfo, 0, 0);
 		m_pDeviceContext->DrawIndexed(6, 0, 0);
 	}
 }
 void Render::D3DRenderer::RenderEmittersInstanced(ParticleEmitter* emitter)
 {
+	{
+		D3D11_MAPPED_SUBRESOURCE mapped;
+		HR_T(m_pDeviceContext->Map(emitter->m_instanceMat.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
+		memcpy(mapped.pData, emitter->worldMat.data(), sizeof(Matrix) * emitter->m_activeCount);
+		m_pDeviceContext->Unmap(emitter->m_instanceMat.Get(), 0);
+	}
+	{
+		D3D11_MAPPED_SUBRESOURCE mapped1;
+		HR_T(m_pDeviceContext->Map(emitter->m_instanceAnim.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped1));
+		memcpy(mapped1.pData, emitter->frameinfo.data(), sizeof(Vector4) * emitter->m_activeCount);
+		m_pDeviceContext->Unmap(emitter->m_instanceAnim.Get(), 0);
+	}
 
-	D3D11_MAPPED_SUBRESOURCE mapped;
-	HR_T(m_pDeviceContext->Map(emitter->m_instanceBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
-	memcpy(mapped.pData, emitter->m_instances.data(), sizeof(InstanceData) * emitter->m_activeCount);
-	m_pDeviceContext->Unmap(emitter->m_instanceBuffer.Get(), 0);
+	{
+		D3D11_MAPPED_SUBRESOURCE mapped2;
+		HR_T(m_pDeviceContext->Map(emitter->m_instanceColor.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped2));
+		memcpy(mapped2.pData, emitter->color.data(), sizeof(Vector4) * emitter->m_activeCount);
+		m_pDeviceContext->Unmap(emitter->m_instanceColor.Get(), 0);
+	}
+
+	{
+		D3D11_MAPPED_SUBRESOURCE mapped3;
+		HR_T(m_pDeviceContext->Map(emitter->m_instanceAge.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped3));
+		memcpy(mapped3.pData, emitter->agebuf.data(), sizeof(Vector4) * emitter->m_activeCount);
+		m_pDeviceContext->Unmap(emitter->m_instanceAge.Get(), 0);
+	}
+
+
+
 	// 셰이더 리소스 바인딩
-	m_pDeviceContext->VSSetShaderResources(0, 1, emitter->m_instanceSRV.GetAddressOf());
+	m_pDeviceContext->VSSetShaderResources(0, 1, emitter->m_instanceMatSRV.GetAddressOf());
+	m_pDeviceContext->VSSetShaderResources(1, 1, emitter->m_instanceAnimSRV.GetAddressOf());
+	m_pDeviceContext->VSSetShaderResources(2, 1, emitter->m_instanceColorSRV.GetAddressOf());
+	m_pDeviceContext->VSSetShaderResources(3, 1, emitter->m_instanceAgeSRV.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(17, 1, emitter->m_defaultTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(18, 1, emitter->m_alphaTexture.GetAddressOf());
 	m_pDeviceContext->PSSetShaderResources(19, 1, emitter->m_normalTexture.GetAddressOf());
@@ -1705,6 +1829,14 @@ void Render::D3DRenderer::BeginDeferred()
 	m_pDeviceContext->RSSetViewports(1, &viewports[0]);
 	m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	m_pDeviceContext->OMSetRenderTargets(GBUFSIZE, m_GBufferRTVs.data()->GetAddressOf(), m_pDepthStencilView.Get());
+		
+
+	if (_isParticleInstanced)
+		m_pDeviceContext->RSSetState(m_pNoneCullmodeRS.Get());
+	else
+		m_pDeviceContext->RSSetState(m_pBackCullmodeRS.Get());
+
+
 
 	const float clear_color_with_alpha[4] = { m_ClearColor.x , m_ClearColor.y , m_ClearColor.z, m_ClearColor.w };
 	for (auto rt : m_GBufferRTVs)

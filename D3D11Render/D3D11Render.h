@@ -1,11 +1,11 @@
 #pragma once
+#include <directxtk/SimpleMath.h>
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <vector>
 #include <string>
 #include <filesystem>
 #include <wincodec.h>
-#include <directxtk/SimpleMath.h>
 
 #include "Model.h"
 #include "Particles.h"
@@ -285,7 +285,7 @@ namespace Render
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_ShadowMapDSV = nullptr;
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_ShadowMap = nullptr;
 
-		float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		float blendFactor[4] = { 1.f, 1.0f, 1.0f, 1.0f };
 		Microsoft::WRL::ComPtr <ID3D11SamplerState> m_pSamplerLinear = nullptr;
 		Microsoft::WRL::ComPtr <ID3D11SamplerState> m_pBloomSampler = nullptr;
 		Microsoft::WRL::ComPtr <ID3D11SamplerState> m_pSamplerComparison = nullptr;
@@ -310,7 +310,7 @@ namespace Render
 		float m_ShadowUpDistFromCamera = 13000.f;
 		Vector3 m_ShadowPos;
 
-
+		Vector3 modelimguiscale = Vector3(1, 1, 1);
 
 		std::vector<D3D11_VIEWPORT> viewports;
 
